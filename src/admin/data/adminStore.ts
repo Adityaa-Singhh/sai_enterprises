@@ -388,6 +388,18 @@ export function useAdminStore() {
   };
 
   // Enquiries Management
+  const addEnquiry = (enquiry: Omit<AdminEnquiry, 'id' | 'status' | 'internalNotes'>) => {
+    const newEnquiry: AdminEnquiry = {
+      ...enquiry,
+      id: `enq-${Date.now()}`,
+      status: 'NEW',
+      internalNotes: [],
+    };
+    setEnquiries(prev => [newEnquiry, ...prev]);
+    logActivity('Received New Enquiry', `From ${enquiry.customerName}`);
+    return newEnquiry;
+  };
+
   const updateEnquiryStatus = (id: string, status: AdminEnquiry['status']) => {
     setEnquiries(prev => prev.map(e => (e.id === id ? { ...e, status } : e)));
     const target = enquiries.find(e => e.id === id);
@@ -503,6 +515,7 @@ export function useAdminStore() {
     addBrand,
     updateBrand,
     deleteBrand,
+    addEnquiry,
     updateEnquiryStatus,
     addEnquiryNote,
     addGalleryImage,

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, forwardRef, type ReactNode, type Ref } from 'react';
-import { getWhatsAppUrl } from '../data';
+
+import { useAdminStore } from '../admin/data/adminStore';
 
 // ===== Scroll Reveal Hook =====
 export function useScrollReveal<T extends HTMLElement>() {
@@ -291,19 +292,21 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
     return () => { document.body.style.overflow = ''; };
   }, []);
 
+  const { addEnquiry } = useAdminStore();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const messageLines = [
-      `*New Quote Request from Website*`,
-      `• *Name:* ${formData.name}`,
-      `• *Phone:* ${formData.phone}`,
-      `• *Requirement:* ${formData.product}`,
-    ];
-    if (formData.quantity) messageLines.push(`• *Quantity:* ${formData.quantity}`);
-    if (formData.message) messageLines.push(`• *Notes:* ${formData.message}`);
-
-    const url = getWhatsAppUrl(messageLines.join('\n'));
-    window.open(url, '_blank', 'noopener,noreferrer');
+    
+    addEnquiry({
+      customerName: formData.name,
+      phone: formData.phone,
+      productRequirement: formData.product,
+      message: formData.message ? `${formData.message}${formData.quantity ? ' | Qty: ' + formData.quantity : ''}` : (formData.quantity ? `Qty: ${formData.quantity}` : 'No notes'),
+      date: new Date().toISOString().split('T')[0],
+      timestamp: Date.now(),
+      source: 'Web Quote',
+      priority: 'MEDIUM',
+    });
 
     setSubmitted(true);
     setTimeout(() => {
