@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -10,6 +11,7 @@ import {
   Counter, 
   useScrollReveal 
 } from '../components/ui';
+import { ElectricCanvas } from '../components/ElectricCanvas';
 import { 
   products, 
   categories, 
@@ -40,73 +42,249 @@ export default function Home({ onQuote }: HomeProps) {
 
   const heroReveal = useScrollReveal<HTMLDivElement>();
 
+  // SaaS Interactive Telemetry / Load Calculator State
+  const [loadKw, setLoadKw] = useState<number>(6);
+  const [phase, setPhase] = useState<'single' | 'three'>('single');
+  const [activeCategoryTab, setActiveCategoryTab] = useState<'switches' | 'wires' | 'mcb' | 'lighting'>('switches');
+
+  // Dynamic calculations
+  const voltage = phase === 'single' ? 230 : 415;
+  const currentAmps = phase === 'single' 
+    ? ((loadKw * 1000) / voltage).toFixed(1) 
+    : ((loadKw * 1000) / (Math.sqrt(3) * voltage * 0.85)).toFixed(1);
+  
+  const recommendedMcb = Number(currentAmps) <= 10 ? '10A C-Curve'
+    : Number(currentAmps) <= 16 ? '16A C-Curve'
+    : Number(currentAmps) <= 25 ? '25A C-Curve'
+    : Number(currentAmps) <= 32 ? '32A C-Curve'
+    : Number(currentAmps) <= 63 ? '63A D-Curve'
+    : '100A MCCB Industrial';
+
+  const recommendedCable = Number(currentAmps) <= 12 ? '1.5 sq mm Cu FR'
+    : Number(currentAmps) <= 18 ? '2.5 sq mm Cu FR'
+    : Number(currentAmps) <= 26 ? '4.0 sq mm Cu FR-LSH'
+    : Number(currentAmps) <= 35 ? '6.0 sq mm Cu FR-LSH'
+    : '10.0+ sq mm Armoured Cu';
+
   return (
     <div className="flex flex-col min-h-screen">
-      {/* 1. HERO SECTION */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-20 pb-16">
-        <div className="absolute inset-0 grid-bg opacity-30"></div>
+      {/* 1. HERO SECTION WITH INTERACTIVE ELECTRIC CANVAS */}
+      <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden pt-20 pb-20">
+        {/* Interactive Electrical Background Canvas */}
+        <ElectricCanvas className="opacity-70 dark:opacity-80" particleCount={50} connectionDistance={135} interactive={true} />
         
-        {/* Animated Orbs */}
-        <div className="orb orb-volt top-1/4 left-1/4 w-96 h-96 opacity-50 blur-3xl mix-blend-screen"></div>
-        <div className="orb orb-blue bottom-1/4 right-1/4 w-96 h-96 opacity-50 blur-3xl mix-blend-screen"></div>
+        <div className="absolute inset-0 grid-bg opacity-25 pointer-events-none"></div>
+        
+        {/* Ambient Gradient Orbs */}
+        <div className="orb orb-volt top-1/4 left-1/4 w-96 h-96 opacity-40 blur-3xl mix-blend-screen pointer-events-none"></div>
+        <div className="orb orb-blue bottom-1/4 right-1/4 w-96 h-96 opacity-40 blur-3xl mix-blend-screen pointer-events-none"></div>
         
         <div className="container px-4 sm:px-6 relative z-10 mx-auto max-w-7xl">
           <motion.div 
             ref={heroReveal} 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="flex flex-col items-center text-center max-w-4xl mx-auto space-y-8"
+            className="flex flex-col items-center text-center max-w-5xl mx-auto space-y-8"
           >
-            <div className="badge badge-volt px-4 py-1.5 rounded-full border border-volt/40 shadow-[0_0_20px_rgba(0,229,255,0.25)] inline-flex items-center gap-2">
-              <Icons.Sparkles className="w-4 h-4 text-volt" />
-              <span className="text-sm font-semibold tracking-wide">Premier Electrical Distributor</span>
-            </div>
             
-            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-tight text-white">
-              Your Trusted <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-volt via-cyan-400 to-blue-500">
-                Electrical Products
+            <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.1] text-white">
+              The Modern Platform for <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-volt via-cyan-400 to-blue-500 drop-shadow-[0_0_25px_rgba(0,229,255,0.3)]">
+                Electrical Infrastructure
               </span>
-              <br/> Partner
             </h1>
             
-            <p className="text-lg md:text-xl text-slate-300 max-w-2xl leading-relaxed font-normal">
-              Authorized dealer for top brands with {businessInfo.experience} years of experience providing quality electrical solutions for industrial, commercial, and residential projects.
+            <p className="text-base sm:text-lg md:text-xl text-slate-300 max-w-3xl leading-relaxed font-normal">
+              Direct brand-authorized distribution platform for switches, cables, switchgear, and commercial lighting with {businessInfo.experience}+ years of enterprise reliability.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">
-              <Link to="/products" className="btn-primary py-4 px-8 text-lg rounded-full flex items-center justify-center gap-2 group shadow-xl hover:scale-105 transition-all">
-                Explore Products
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto items-center justify-center pt-2">
+              <Link to="/products" className="btn-primary py-4 px-8 text-base font-bold rounded-full flex items-center justify-center gap-2 group shadow-[0_4px_25px_rgba(0,229,255,0.35)] hover:scale-105 transition-all w-full sm:w-auto">
+                <Icons.Layers className="w-5 h-5" />
+                Browse Catalog
                 <Icons.ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <button onClick={onQuote} className="btn-secondary py-4 px-8 text-lg rounded-full flex items-center justify-center gap-2 group hover:scale-105 transition-all">
-                <Icons.FileText className="w-5 h-5 text-volt" />
-                Get a Quote
+              <button onClick={onQuote} className="btn-secondary py-4 px-8 text-base font-semibold rounded-full flex items-center justify-center gap-2 group hover:scale-105 transition-all w-full sm:w-auto">
+                <Icons.Zap className="w-5 h-5 text-volt" />
+                Instant Quotation
               </button>
-              <a href={getWhatsAppUrl()} target="_blank" rel="noopener noreferrer" className="btn-whatsapp py-4 px-8 text-lg rounded-full flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-xl">
+              <a href={getWhatsAppUrl()} target="_blank" rel="noopener noreferrer" className="btn-whatsapp py-4 px-8 text-base font-semibold rounded-full flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-lg w-full sm:w-auto">
                 <Icons.MessageCircle className="w-5 h-5" />
-                WhatsApp Us
+                Direct WhatsApp Dispatch
               </a>
             </div>
+
+            {/* SaaS Interactive Telemetry & Configurator Card */}
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.2 }}
+              className="saas-glow-card w-full max-w-4xl p-6 sm:p-8 mt-10 text-left"
+            >
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between pb-6 border-b border-white/10 gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-volt/15 border border-volt/30 flex items-center justify-center text-volt">
+                    <Icons.Cpu className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                      Live Electrical Load & Spec Engine
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                        ⚡ Real-time
+                      </span>
+                    </h2>
+                    <p className="text-xs text-slate-400 font-normal">
+                      Calculate breaker sizing, cable requirements, and check instant warehouse inventory
+                    </p>
+                  </div>
+                </div>
+
+                {/* Phase Toggle */}
+                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/5 border border-white/10 self-stretch md:self-auto justify-center">
+                  <button
+                    onClick={() => setPhase('single')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      phase === 'single' 
+                        ? 'bg-volt text-dark-0 shadow-md' 
+                        : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    230V 1-Phase
+                  </button>
+                  <button
+                    onClick={() => setPhase('three')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      phase === 'three' 
+                        ? 'bg-volt text-dark-0 shadow-md' 
+                        : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    415V 3-Phase
+                  </button>
+                </div>
+              </div>
+
+              {/* Slider & Telemetry Output */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-6">
+                {/* Left: Load Control */}
+                <div className="lg:col-span-6 flex flex-col justify-center space-y-4">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                      Connected Total Load
+                    </label>
+                    <span className="text-lg font-extrabold text-volt">
+                      {loadKw} kW <span className="text-xs text-slate-400 font-normal">({(loadKw * 1.341).toFixed(1)} HP)</span>
+                    </span>
+                  </div>
+                  
+                  <input
+                    type="range"
+                    min="1"
+                    max="25"
+                    step="1"
+                    value={loadKw}
+                    onChange={(e) => setLoadKw(Number(e.target.value))}
+                    className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                  />
+                  <div className="flex justify-between text-[11px] text-slate-400">
+                    <span>1 kW (Residential)</span>
+                    <span>12 kW (Commercial)</span>
+                    <span>25 kW (Industrial)</span>
+                  </div>
+
+                  {/* Category Pills */}
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {[
+                      { id: 'switches', label: 'Switches', icon: 'ToggleLeft' },
+                      { id: 'wires', label: 'Cables & Wires', icon: 'Activity' },
+                      { id: 'mcb', label: 'MCB Protection', icon: 'ShieldCheck' },
+                      { id: 'lighting', label: 'LED Lighting', icon: 'Sun' },
+                    ].map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => setActiveCategoryTab(cat.id as any)}
+                        className={`text-xs px-2.5 py-1 rounded-lg border flex items-center gap-1.5 transition-all ${
+                          activeCategoryTab === cat.id
+                            ? 'bg-white/15 border-volt/40 text-volt font-bold'
+                            : 'bg-white/5 border-white/5 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <IconComponent name={cat.icon} className="w-3.5 h-3.5" />
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Right: Real-time Computed Specs */}
+                <div className="lg:col-span-6 grid grid-cols-2 gap-3 p-4 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="p-3 rounded-xl bg-dark-0/60 border border-white/5 flex flex-col justify-between">
+                    <span className="text-[11px] text-slate-400 font-medium">Estimated Amperage</span>
+                    <div className="mt-1">
+                      <span className="text-xl font-extrabold text-white">{currentAmps}</span>
+                      <span className="text-xs text-volt font-bold ml-1">Amps</span>
+                    </div>
+                    <span className="text-[10px] text-emerald-400 mt-1 flex items-center gap-1">
+                      <Icons.CheckCircle2 className="w-3 h-3" /> Nominal Continuous
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-dark-0/60 border border-white/5 flex flex-col justify-between">
+                    <span className="text-[11px] text-slate-400 font-medium">Recommended MCB</span>
+                    <div className="mt-1">
+                      <span className="text-sm sm:text-base font-extrabold text-volt truncate">{recommendedMcb}</span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 mt-1">10kA Breaking Cap.</span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-dark-0/60 border border-white/5 flex flex-col justify-between">
+                    <span className="text-[11px] text-slate-400 font-medium">Recommended Cable</span>
+                    <div className="mt-1">
+                      <span className="text-xs sm:text-sm font-bold text-white truncate">{recommendedCable}</span>
+                    </div>
+                    <span className="text-[10px] text-cyan-400 mt-1">IS 694 Certified</span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-dark-0/60 border border-white/5 flex flex-col justify-between">
+                    <span className="text-[11px] text-slate-400 font-medium">Warehouse Availability</span>
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="text-xs sm:text-sm font-bold text-emerald-400">Ready Stock</span>
+                    </div>
+                    <button
+                      onClick={onQuote}
+                      className="mt-1 text-[11px] font-bold text-volt hover:underline text-left flex items-center gap-1"
+                    >
+                      Request Bulk Quote <Icons.ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
             
-            {/* Trust Indicators */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 pt-12 w-full border-t border-white/10 mt-12">
-              <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/5">
-                <span className="text-3xl font-extrabold text-volt mb-1"><Counter end={businessInfo.experience} suffix="+" /></span>
-                <span className="text-xs text-slate-300 uppercase tracking-widest font-semibold">Years Exp</span>
+            {/* SaaS Trust & Metric Strip */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 pt-10 w-full border-t border-white/10 mt-12">
+              <div className="flex flex-col items-center justify-center p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-volt/30 transition-all group">
+                <span className="text-3xl md:text-4xl font-extrabold text-volt mb-1 group-hover:scale-105 transition-transform"><Counter end={businessInfo.experience} suffix="+" /></span>
+                <span className="text-xs text-slate-300 uppercase tracking-widest font-semibold">Years Enterprise Trust</span>
+                <span className="text-[10px] text-emerald-400 mt-1 font-medium">▲ ISO 9001:2015 Partner</span>
               </div>
-              <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/5">
-                <span className="text-3xl font-extrabold text-volt mb-1"><Counter end={businessInfo.productsCount} suffix="+" /></span>
-                <span className="text-xs text-slate-300 uppercase tracking-widest font-semibold">Products</span>
+              <div className="flex flex-col items-center justify-center p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-volt/30 transition-all group">
+                <span className="text-3xl md:text-4xl font-extrabold text-volt mb-1 group-hover:scale-105 transition-transform"><Counter end={businessInfo.productsCount} suffix="+" /></span>
+                <span className="text-xs text-slate-300 uppercase tracking-widest font-semibold">SKUs in Catalog</span>
+                <span className="text-[10px] text-cyan-400 mt-1 font-medium">⚡ 100% Genuine Brands</span>
               </div>
-              <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/5">
-                <span className="text-3xl font-extrabold text-volt mb-1"><Counter end={businessInfo.brandsCount} suffix="+" /></span>
-                <span className="text-xs text-slate-300 uppercase tracking-widest font-semibold">Brands</span>
+              <div className="flex flex-col items-center justify-center p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-volt/30 transition-all group">
+                <span className="text-3xl md:text-4xl font-extrabold text-volt mb-1 group-hover:scale-105 transition-transform"><Counter end={businessInfo.brandsCount} suffix="+" /></span>
+                <span className="text-xs text-slate-300 uppercase tracking-widest font-semibold">Authorized Brands</span>
+                <span className="text-[10px] text-emerald-400 mt-1 font-medium">▲ Direct OEM Sourcing</span>
               </div>
-              <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/5">
-                <span className="text-3xl font-extrabold text-volt mb-1"><Counter end={businessInfo.customersServed} suffix="+" /></span>
-                <span className="text-xs text-slate-300 uppercase tracking-widest font-semibold">Customers</span>
+              <div className="flex flex-col items-center justify-center p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-volt/30 transition-all group">
+                <span className="text-3xl md:text-4xl font-extrabold text-volt mb-1 group-hover:scale-105 transition-transform"><Counter end={businessInfo.customersServed} suffix="+" /></span>
+                <span className="text-xs text-slate-300 uppercase tracking-widest font-semibold">B2B Clients Served</span>
+                <span className="text-[10px] text-volt mt-1 font-medium">★ 4.9/5 Client Rating</span>
               </div>
             </div>
           </motion.div>

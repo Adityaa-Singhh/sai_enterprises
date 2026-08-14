@@ -630,6 +630,85 @@ html:not(.dark) {
   box-shadow: 0 0 10px rgba(234, 179, 8, 0.15);
 }
 
+/* ===== SAAS UI ENHANCEMENTS ===== */
+.saas-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+html:not(.dark) .saas-pill {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.saas-pill:hover {
+  border-color: rgba(0, 229, 255, 0.4);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.live-pulse-dot {
+  position: relative;
+  display: inline-flex;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background-color: #22c55e;
+}
+
+.live-pulse-dot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  background-color: #22c55e;
+  opacity: 0.75;
+  animation: live-pulse 1.8s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+@keyframes live-pulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+.saas-glow-card {
+  position: relative;
+  background: rgba(17, 17, 24, 0.75);
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1.5rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html:not(.dark) .saas-glow-card {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 20px 50px rgba(31, 38, 135, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+}
+
+.saas-glow-card:hover {
+  border-color: rgba(0, 229, 255, 0.35);
+  box-shadow: 0 25px 60px rgba(0, 229, 255, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
 /* ===== WHATSAPP FAB WITH RAY EMISSIONS ===== */
 .whatsapp-fab-container {
   position: fixed;
