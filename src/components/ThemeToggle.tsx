@@ -600,7 +600,11 @@ export const useThemeToggle = ({
       return;
     }
 
-    (document as any).startViewTransition(switchTheme);
+    try {
+      (document as any).startViewTransition(switchTheme);
+    } catch {
+      switchTheme();
+    }
   }, [
     theme,
     setTheme,
