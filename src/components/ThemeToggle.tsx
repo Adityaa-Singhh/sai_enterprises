@@ -713,7 +713,7 @@ export const ThemeToggleButton = ({
     <button
       type="button"
       className={cn(
-        "relative flex items-center justify-center size-10 cursor-pointer rounded-full bg-slate-900 dark:bg-white/10 text-white border border-white/20 p-2 transition-all duration-300 hover:scale-105 active:scale-95 shadow-md",
+        "relative flex items-center justify-center size-10 cursor-pointer rounded-full bg-slate-200 dark:bg-white/10 text-slate-800 dark:text-white border border-slate-300 dark:border-white/20 p-2 transition-all duration-300 hover:scale-105 active:scale-95 shadow-md",
         className,
       )}
       onClick={toggleTheme}

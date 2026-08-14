@@ -130,9 +130,9 @@ export default function Home({ onQuote }: HomeProps) {
                     <Icons.Cpu className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                    <h2 className="text-base sm:text-lg font-bold text-white flex flex-wrap items-center gap-2">
                       Live Electrical Load & Spec Engine
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
                         ⚡ Real-time
                       </span>
                     </h2>
@@ -232,18 +232,18 @@ export default function Home({ onQuote }: HomeProps) {
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-dark-0/60 border border-white/5 flex flex-col justify-between">
+                  <div className="p-3 rounded-xl bg-dark-0/60 border border-white/5 flex flex-col justify-between min-w-0">
                     <span className="text-[11px] text-slate-400 font-medium">Recommended MCB</span>
-                    <div className="mt-1">
-                      <span className="text-sm sm:text-base font-extrabold text-volt truncate">{recommendedMcb}</span>
+                    <div className="mt-1 min-w-0">
+                      <span className="text-xs sm:text-sm md:text-base font-extrabold text-volt block whitespace-normal break-words">{recommendedMcb}</span>
                     </div>
                     <span className="text-[10px] text-slate-400 mt-1">10kA Breaking Cap.</span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-dark-0/60 border border-white/5 flex flex-col justify-between">
+                  <div className="p-3 rounded-xl bg-dark-0/60 border border-white/5 flex flex-col justify-between min-w-0">
                     <span className="text-[11px] text-slate-400 font-medium">Recommended Cable</span>
-                    <div className="mt-1">
-                      <span className="text-xs sm:text-sm font-bold text-white truncate">{recommendedCable}</span>
+                    <div className="mt-1 min-w-0">
+                      <span className="text-xs sm:text-sm font-bold text-white block whitespace-normal break-words">{recommendedCable}</span>
                     </div>
                     <span className="text-[10px] text-cyan-400 mt-1">IS 694 Certified</span>
                   </div>
@@ -538,22 +538,22 @@ export default function Home({ onQuote }: HomeProps) {
             </div>
           </div>
           
-          <div className="order-1 lg:order-2 relative">
+          <div className="order-1 lg:order-2 relative flex flex-col items-center w-full">
             <div className="absolute inset-0 bg-gradient-to-tr from-volt/20 to-blue-500/20 blur-3xl rounded-full"></div>
-            <div className="glass-card p-2 relative z-10 aspect-video lg:aspect-square overflow-hidden rounded-3xl border border-white/10">
-              <div className="w-full h-full bg-dark-2 flex flex-col items-center justify-center text-slate-300 rounded-2xl border border-white/5">
-                <Icons.Building2 className="w-24 h-24 mb-4 text-volt opacity-70" />
-                <span className="text-xl font-bold tracking-widest uppercase text-white">{businessInfo.name}</span>
+            <div className="glass-card p-2 relative z-10 w-full aspect-video lg:aspect-square overflow-hidden rounded-3xl border border-white/10">
+              <div className="w-full h-full bg-dark-2 flex flex-col items-center justify-center text-slate-300 rounded-2xl border border-white/5 py-8">
+                <Icons.Building2 className="w-16 h-16 sm:w-24 sm:h-24 mb-4 text-volt opacity-70" />
+                <span className="text-lg sm:text-xl font-bold tracking-widest uppercase text-white">{businessInfo.name}</span>
               </div>
             </div>
             
-            <div className="absolute -bottom-6 -left-6 glass-card p-6 z-20 flex items-center gap-4 animate-bounce-slow rounded-3xl border border-white/15 shadow-2xl">
-              <div className="w-12 h-12 rounded-2xl bg-volt/20 flex items-center justify-center text-volt">
-                <Icons.Award className="w-6 h-6" />
+            <div className="mt-4 sm:mt-0 sm:absolute sm:-bottom-6 sm:-left-6 glass-card p-4 sm:p-6 z-20 flex items-center gap-3 sm:gap-4 animate-bounce-slow rounded-3xl border border-white/15 shadow-2xl w-full sm:w-auto">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-volt/20 flex items-center justify-center text-volt shrink-0">
+                <Icons.Award className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-white">Authorized</div>
-                <div className="text-sm text-slate-300 font-medium">Distributor</div>
+                <div className="text-lg sm:text-2xl font-bold text-white leading-tight">Authorized</div>
+                <div className="text-xs sm:text-sm text-slate-300 font-medium">Distributor</div>
               </div>
             </div>
           </div>
