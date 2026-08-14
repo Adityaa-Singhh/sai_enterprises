@@ -18,13 +18,13 @@ export default function ProductDetail() {
 
   if (!product) {
     return (
-      <div className="pt-24 pb-16 min-h-[60vh] flex items-center justify-center">
+      <div className="pt-24 pb-16 min-h-[60vh] flex flex-col items-center justify-center text-center gap-6">
         <EmptyState 
           icon={<X size={48} />}
           title="Product Not Found"
           description="The product you are looking for does not exist or has been removed."
         />
-        <div className="mt-8 flex justify-center">
+        <div>
           <Link to="/products" className="btn-primary">
             Back to Products
           </Link>

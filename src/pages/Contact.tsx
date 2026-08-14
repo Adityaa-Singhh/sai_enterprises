@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Phone, MessageCircle, Mail, MapPin, Clock, Send, Check, ArrowRight } from 'lucide-react';
 import { Section, SectionHeader, useScrollReveal } from '../components/ui';
 import { businessInfo, getWhatsAppUrl, getPhoneUrl } from '../data';
+import { useAdminStore } from '../admin/data/adminStore';
 
 interface ContactProps {
   onQuote: () => void;
 }
 
 export default function Contact({ onQuote }: ContactProps) {
+  const { addEnquiry } = useAdminStore();
   const [formState, setFormState] = useState({
     name: '',
     phone: '',
@@ -27,14 +29,25 @@ export default function Contact({ onQuote }: ContactProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulate API call
+
+    addEnquiry({
+      customerName: formState.name,
+      phone: formState.phone,
+      productRequirement: formState.requirement,
+      message: formState.message ? `${formState.message}${formState.quantity ? ' | Qty: ' + formState.quantity : ''}` : (formState.quantity ? `Qty: ${formState.quantity}` : 'General Inquiry'),
+      date: new Date().toISOString().split('T')[0],
+      timestamp: Date.now(),
+      source: 'Contact Form',
+      priority: 'HIGH',
+    });
+
     setTimeout(() => {
       setIsSubmitting(false);
       setIsSuccess(true);
       setFormState({ name: '', phone: '', requirement: '', quantity: '', message: '' });
       
       setTimeout(() => setIsSuccess(false), 5000);
-    }, 1500);
+    }, 800);
   };
 
   return (

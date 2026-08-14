@@ -74,15 +74,22 @@ body {
 }
 
 html.dark body {
+  background-image: linear-gradient(to bottom, rgba(10, 10, 15, 0.93), rgba(10, 10, 15, 0.93)), url('/bg-electric.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   color: #e2e8f0;
 }
 
 /* ===== LIGHT MODE ADAPTIVE STYLES ===== */
 html:not(.dark) {
   body {
-    background: radial-gradient(circle at 10% 20%, rgba(0, 229, 255, 0.06) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
-                #f8fafc;
+    background-image: linear-gradient(to bottom, rgba(248, 250, 252, 0.93), rgba(248, 250, 252, 0.93)), url('/bg-electric.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
   }
 
   .text-white {
@@ -405,28 +412,46 @@ html:not(.dark) {
 
 /* ===== BUTTON STYLES ===== */
 .btn-primary {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.75rem;
-  background: linear-gradient(135deg, var(--color-volt), var(--color-volt-dim));
-  color: #0a0a0f;
-  font-weight: 600;
+  background: linear-gradient(135deg, #00f0ff 0%, #00b8d4 50%, #0284c7 100%);
+  color: #0a0a0f !important;
+  font-weight: 700;
   font-size: 0.875rem;
   border-radius: 9999px;
   border: none;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   text-decoration: none;
   white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0, 229, 255, 0.35);
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: 0.6s;
+}
+
+.btn-primary:hover::before {
+  left: 100%;
 }
 
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(0, 229, 255, 0.35);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 30px rgba(0, 229, 255, 0.55);
 }
 
-.btn-primary:active { transform: translateY(0); }
+.btn-primary:active { transform: translateY(0) scale(0.98); }
 .btn-primary:focus-visible {
   outline: 2px solid var(--color-volt);
   outline-offset: 2px;

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth, type UserRole } from '../context/AuthContext';
 import { useAdminStore } from '../data/adminStore';
+import { ThemeToggleButton } from '../../components/ThemeToggle';
 
 interface AdminHeaderProps {
   onToggleMobileMenu: () => void;
@@ -132,6 +133,11 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onToggleMobileMenu }) 
 
         {/* Right Side: Search, Quick Actions, Notifications, Profile */}
         <div className="flex items-center gap-2.5">
+          {/* Theme Toggle */}
+          <div className="hidden sm:block scale-90 origin-right">
+            <ThemeToggleButton variant="circle" start="top-right" blur={true} />
+          </div>
+
           {/* Quick Search Button (Desktop) */}
           <button
             onClick={() => setSearchModalOpen(true)}

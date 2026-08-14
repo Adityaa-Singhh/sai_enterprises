@@ -23,7 +23,7 @@ export interface AdminEnquiry {
   message: string;
   date: string;
   timestamp: number;
-  source: 'WhatsApp' | 'Web Quote' | 'Direct Call' | 'Store Visit';
+  source: 'WhatsApp' | 'Web Quote' | 'Direct Call' | 'Store Visit' | 'Contact Form';
   status: 'NEW' | 'CONTACTED' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
   internalNotes: { id: string; author: string; note: string; date: string }[];

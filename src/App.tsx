@@ -47,6 +47,8 @@ function ScrollToTop() {
   return null;
 }
 
+import { ElectricCanvas } from './components/ElectricCanvas';
+
 // Public Website Layout Component
 function PublicLayout() {
   const [quoteOpen, setQuoteOpen] = useState(false);
@@ -66,11 +68,15 @@ function PublicLayout() {
   }, [navigate]);
 
   return (
-    <div className="relative min-h-screen bg-dark-0">
+    <div className="relative min-h-screen bg-dark-0 overflow-clip">
       <ScrollToTop />
-      <Navbar onQuote={() => setQuoteOpen(true)} />
+      {/* Global Ambient Electric Canvas */}
+      <ElectricCanvas className="fixed inset-0 pointer-events-none z-0 opacity-20 dark:opacity-25" particleCount={45} connectionDistance={125} interactive={true} />
+      
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Navbar onQuote={() => setQuoteOpen(true)} />
 
-      <main>
+        <main className="flex-1">
         <Routes>
           <Route path="/" element={<HomePage onQuote={() => setQuoteOpen(true)} />} />
           <Route path="/products" element={<ProductsPage />} />
@@ -90,6 +96,7 @@ function PublicLayout() {
       <WhatsAppFab />
 
       {quoteOpen && <QuoteModal onClose={() => setQuoteOpen(false)} />}
+      </div>
     </div>
   );
 }

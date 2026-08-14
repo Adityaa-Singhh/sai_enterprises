@@ -12,6 +12,7 @@ import {
   useScrollReveal 
 } from '../components/ui';
 import { ElectricCanvas } from '../components/ElectricCanvas';
+import { SpotlightCard } from '../components/SpotlightCard';
 import { 
   products, 
   categories, 
@@ -304,21 +305,21 @@ export default function Home({ onQuote }: HomeProps) {
             <Link 
               key={category.id} 
               to={`/products?category=${category.slug}`}
-              className="glass-card p-6 rounded-3xl flex flex-col items-center text-center group hover:-translate-y-2 transition-all duration-300 relative overflow-hidden border border-white/10 hover:border-volt/40"
+              className="block h-full group"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-volt/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              
-              <div className="w-16 h-16 rounded-2xl bg-dark-2 border border-white/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500 group-hover:border-volt/40 shadow-[0_0_20px_rgba(0,0,0,0.5)] group-hover:shadow-[0_0_25px_rgba(0,229,255,0.3)]">
-                <IconComponent name={category.icon} className="w-8 h-8 text-volt" />
-              </div>
-              
-              <h3 className="text-lg font-bold text-white mb-2">{category.name}</h3>
-              <p className="text-xs text-slate-300 mb-4 line-clamp-2 font-normal leading-relaxed">{category.description}</p>
-              
-              <div className="mt-auto flex items-center gap-2 text-sm text-cyan-400 font-semibold group-hover:text-volt transition-colors">
-                <span>Browse {category.productCount}</span>
-                <Icons.ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </div>
+              <SpotlightCard className="p-6 h-full flex flex-col items-center text-center hover:-translate-y-2 transition-all duration-300">
+                <div className="w-16 h-16 rounded-2xl bg-dark-2 border border-white/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500 group-hover:border-volt/40 shadow-[0_0_20px_rgba(0,0,0,0.5)] group-hover:shadow-[0_0_25px_rgba(0,229,255,0.3)]">
+                  <IconComponent name={category.icon} className="w-8 h-8 text-volt" />
+                </div>
+                
+                <h3 className="text-lg font-bold text-white mb-2">{category.name}</h3>
+                <p className="text-xs text-slate-300 mb-4 line-clamp-2 font-normal leading-relaxed">{category.description}</p>
+                
+                <div className="mt-auto flex items-center gap-2 text-sm text-cyan-400 font-semibold group-hover:text-volt transition-colors">
+                  <span>Browse {category.productCount}</span>
+                  <Icons.ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </SpotlightCard>
             </Link>
           ))}
         </div>
@@ -334,7 +335,7 @@ export default function Home({ onQuote }: HomeProps) {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
           {featuredProducts.map((product) => (
-            <div key={product.id} className="glass-card rounded-3xl flex flex-col h-full overflow-hidden group border border-white/10 hover:border-volt/40 transition-all duration-300">
+            <SpotlightCard key={product.id} className="flex flex-col h-full overflow-hidden group">
               <Link to={`/products/${product.slug}`} className="block relative aspect-square overflow-hidden bg-dark-2">
                 <ProductImage 
                   src={product.images[0]} 
@@ -368,7 +369,7 @@ export default function Home({ onQuote }: HomeProps) {
                   </a>
                 </div>
               </div>
-            </div>
+            </SpotlightCard>
           ))}
         </div>
         
@@ -504,13 +505,13 @@ export default function Home({ onQuote }: HomeProps) {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
           {whyChooseUs.map((feature, idx) => (
-            <div key={idx} className="glass-card p-8 rounded-3xl group hover:-translate-y-1 transition-transform duration-300 border border-white/10 hover:border-volt/40">
+            <SpotlightCard key={idx} className="p-8 group hover:-translate-y-1 transition-transform duration-300">
               <div className="w-14 h-14 rounded-2xl bg-dark-2 border border-white/10 flex items-center justify-center mb-6 text-volt group-hover:scale-110 group-hover:bg-volt/10 transition-all duration-300 shadow-md">
                 <IconComponent name={feature.icon} className="w-7 h-7" />
               </div>
               <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
               <p className="text-slate-300 leading-relaxed font-normal">{feature.description}</p>
-            </div>
+            </SpotlightCard>
           ))}
         </div>
       </Section>
