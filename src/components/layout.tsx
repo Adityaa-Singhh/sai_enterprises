@@ -9,6 +9,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { businessInfo, getWhatsAppUrl, getPhoneUrl } from '../data';
+import { ThemeToggleButton } from './ThemeToggle';
 
 const navLinks = [
   { label: 'Home', to: '/' },
@@ -61,24 +62,6 @@ export default function Navbar({ onQuote }: { onQuote: () => void }) {
 
   return (
     <>
-      {/* Enterprise Announcement Top Bar */}
-      <div className="bg-gradient-to-r from-dark-2 via-dark-1 to-dark-2 text-slate-300 text-[11px] sm:text-xs py-1.5 px-4 border-b border-white/10 hidden sm:block z-50 relative">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-volt font-bold uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Open Today: {businessInfo.hours.weekdays}
-            </span>
-            <span className="text-slate-500">|</span>
-            <span className="font-normal text-slate-300">Authorized Dealer: <strong className="text-white">PMCona</strong>, <strong className="text-white">Havells</strong> & <strong className="text-white">Polycab</strong></span>
-          </div>
-          <div className="flex items-center gap-4 text-slate-300 font-medium">
-            <a href={getPhoneUrl()} className="hover:text-volt transition-colors flex items-center gap-1">
-              <Phone className="w-3 h-3 text-volt" /> {businessInfo.phone}
-            </a>
-          </div>
-        </div>
-      </div>
-
       <header
         className={`sticky top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
@@ -159,6 +142,7 @@ export default function Navbar({ onQuote }: { onQuote: () => void }) {
 
         {/* Desktop CTAs */}
         <div className="hidden lg:flex items-center gap-3">
+          <ThemeToggleButton variant="circle" start="top-right" blur={true} />
           <a
             href={getPhoneUrl()}
             className="liquid-glass text-white text-sm font-semibold px-4 py-2.5 rounded-full hover:bg-white/10 transition-all flex items-center gap-2 border border-white/10"
@@ -174,15 +158,18 @@ export default function Navbar({ onQuote }: { onQuote: () => void }) {
           </button>
         </div>
 
-        {/* Mobile toggle */}
-        <button
-          className="lg:hidden liquid-glass text-white p-2.5 rounded-2xl border border-white/10"
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={menuOpen}
-        >
-          {menuOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
+        {/* Mobile controls */}
+        <div className="flex lg:hidden items-center gap-2">
+          <ThemeToggleButton variant="circle" start="top-right" blur={true} />
+          <button
+            className="liquid-glass text-white p-2.5 rounded-2xl border border-white/10"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
+          >
+            {menuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </nav>
 
       {/* Mobile menu */}

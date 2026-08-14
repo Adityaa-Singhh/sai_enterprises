@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Navbar, { Footer, MobileBottomBar, WhatsAppFab } from './components/layout';
 import { QuoteModal } from './components/ui';
+import { ThemeProvider } from './context/ThemeContext';
 
 // Public Pages
 import HomePage from './pages/Home';
@@ -95,60 +96,62 @@ function PublicLayout() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Admin Login Route */}
-          <Route path="/admin/login" element={<AdminLogin />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Admin Login Route */}
+            <Route path="/admin/login" element={<AdminLogin />} />
 
-          {/* Protected Admin Console Routes */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute>
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="analytics" element={<AdminAnalytics />} />
-            <Route path="products" element={<AdminProducts />} />
-            <Route path="products/new" element={<AdminProductEdit />} />
-            <Route path="products/:id/edit" element={<AdminProductEdit />} />
-            <Route path="categories" element={<AdminCategories />} />
-            <Route path="brands" element={<AdminBrands />} />
-            <Route path="gallery" element={<AdminGallery />} />
-            <Route path="testimonials" element={<AdminTestimonials />} />
-            <Route path="faqs" element={<AdminFAQs />} />
-            <Route path="enquiries" element={<AdminEnquiries />} />
-            <Route path="business" element={<AdminBusinessInfo />} />
-            <Route path="content" element={<AdminHomepageCMS />} />
+            {/* Protected Admin Console Routes */}
             <Route
-              path="users"
+              path="/admin"
               element={
-                <ProtectedRoute requiredPermission="users.manage">
-                  <AdminUsers />
+                <ProtectedRoute>
+                  <AdminLayout />
                 </ProtectedRoute>
               }
-            />
-            <Route path="activity" element={<AdminActivity />} />
-            <Route
-              path="settings"
-              element={
-                <ProtectedRoute requiredPermission="settings.manage">
-                  <AdminSettings />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="security-states" element={<AdminSecurityStates />} />
-            <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
-          </Route>
+            >
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="analytics" element={<AdminAnalytics />} />
+              <Route path="products" element={<AdminProducts />} />
+              <Route path="products/new" element={<AdminProductEdit />} />
+              <Route path="products/:id/edit" element={<AdminProductEdit />} />
+              <Route path="categories" element={<AdminCategories />} />
+              <Route path="brands" element={<AdminBrands />} />
+              <Route path="gallery" element={<AdminGallery />} />
+              <Route path="testimonials" element={<AdminTestimonials />} />
+              <Route path="faqs" element={<AdminFAQs />} />
+              <Route path="enquiries" element={<AdminEnquiries />} />
+              <Route path="business" element={<AdminBusinessInfo />} />
+              <Route path="content" element={<AdminHomepageCMS />} />
+              <Route
+                path="users"
+                element={
+                  <ProtectedRoute requiredPermission="users.manage">
+                    <AdminUsers />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="activity" element={<AdminActivity />} />
+              <Route
+                path="settings"
+                element={
+                  <ProtectedRoute requiredPermission="settings.manage">
+                    <AdminSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="security-states" element={<AdminSecurityStates />} />
+              <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+            </Route>
 
-          {/* Customer Facing Public Store */}
-          <Route path="/*" element={<PublicLayout />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+            {/* Customer Facing Public Store */}
+            <Route path="/*" element={<PublicLayout />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
