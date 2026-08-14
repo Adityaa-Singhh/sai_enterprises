@@ -79,6 +79,12 @@ html.dark body {
 
 /* ===== LIGHT MODE ADAPTIVE STYLES ===== */
 html:not(.dark) {
+  body {
+    background: radial-gradient(circle at 10% 20%, rgba(0, 229, 255, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+                #f8fafc;
+  }
+
   .text-white {
     color: #0f172a !important;
   }
@@ -96,31 +102,33 @@ html:not(.dark) {
   }
 
   .liquid-glass {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(12px) saturate(1.4);
-    -webkit-backdrop-filter: blur(12px) saturate(1.4);
-    border-color: rgba(0, 0, 0, 0.08);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   }
 
   .liquid-glass-strong {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px) saturate(1.6);
-    -webkit-backdrop-filter: blur(20px) saturate(1.6);
-    border-color: rgba(0, 0, 0, 0.1);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(24px) saturate(1.6);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   }
 
   .glass-card {
-    background: #ffffff;
-    border-color: rgba(0, 0, 0, 0.08);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
   }
 
   .glass-card:hover {
-    background: #ffffff;
+    background: rgba(255, 255, 255, 0.6);
     border-color: rgba(0, 184, 212, 0.4);
-    box-shadow: 0 12px 32px rgba(0, 184, 212, 0.12);
+    box-shadow: 0 12px 32px rgba(0, 184, 212, 0.08);
   }
 
   .section-title {
@@ -186,6 +194,13 @@ html:not(.dark) {
   }
   .btn-whatsapp {
     color: #ffffff !important;
+  }
+
+  .mobile-bottom-bar {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
   }
 }
 
