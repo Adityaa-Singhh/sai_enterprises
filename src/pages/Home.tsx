@@ -14,17 +14,12 @@ import {
 import { ElectricCanvas } from '../components/ElectricCanvas';
 import { SpotlightCard } from '../components/SpotlightCard';
 import { 
-  products, 
-  categories, 
-  brands, 
-  testimonials, 
-  businessInfo, 
   whyChooseUs, 
-  galleryImages,
   getWhatsAppUrl, 
   getPhoneUrl,
   getProductEnquiryUrl
 } from '../data';
+import { useAdminStore } from '../admin/data/adminStore';
 
 interface HomeProps {
   onQuote: () => void;
@@ -37,6 +32,7 @@ const IconComponent = ({ name, className }: { name: string, className?: string }
 };
 
 export default function Home({ onQuote }: HomeProps) {
+  const { products, categories, brands, testimonials, gallery: galleryImages, businessInfo } = useAdminStore();
   const featuredProducts = products.filter(p => p.isFeatured).slice(0, 4); // Show top 4
   const featuredTestimonials = testimonials.slice(0, 3);
   const featuredGallery = galleryImages.slice(0, 4); // Or 6

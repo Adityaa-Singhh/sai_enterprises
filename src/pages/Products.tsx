@@ -2,9 +2,11 @@ import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Search, X, Package, SlidersHorizontal, LayoutGrid, List, Check, MessageCircle, Eye, ShieldCheck } from 'lucide-react';
 import { Section, SectionHeader, ProductImage, Badge, EmptyState, useScrollReveal } from '../components/ui';
-import { products, categories, brands, getProductEnquiryUrl } from '../data';
+import { getProductEnquiryUrl } from '../data';
+import { useAdminStore } from '../admin/data/adminStore';
 
 const Products = () => {
+  const { products, categories, brands } = useAdminStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialCategory = searchParams.get('category') || '';
   const initialBrand = searchParams.get('brand') || '';

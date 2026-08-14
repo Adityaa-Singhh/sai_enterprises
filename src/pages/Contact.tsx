@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Phone, MessageCircle, Mail, MapPin, Clock, Send, Check, ArrowRight } from 'lucide-react';
 import { Section, SectionHeader, useScrollReveal } from '../components/ui';
-import { businessInfo, getWhatsAppUrl, getPhoneUrl } from '../data';
+import { getWhatsAppUrl, getPhoneUrl } from '../data';
 import { useAdminStore } from '../admin/data/adminStore';
 import { submitEnquiry } from '../services/enquiryService';
 import { formatDateTime } from '../utils/dateUtils';
@@ -12,7 +12,7 @@ interface ContactProps {
 
 export default function Contact({ onQuote }: ContactProps) {
   const DRAFT_KEY = 'saienterprises_draft_contact';
-  const { addEnquiry } = useAdminStore();
+  const { addEnquiry, businessInfo } = useAdminStore();
 
   const [formState, setFormState] = useState(() => {
     try {

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronRight, Check, X, ShieldCheck, Truck, Phone, MessageCircle } from 'lucide-react';
-import { products, getWhatsAppUrl, getPhoneUrl, getProductEnquiryUrl } from '../data';
+import { getWhatsAppUrl, getPhoneUrl, getProductEnquiryUrl } from '../data';
+import { useAdminStore } from '../admin/data/adminStore';
 import { Section, SectionHeader, ProductImage, Badge, EmptyState, useScrollReveal } from '../components/ui';
 
 export default function ProductDetail() {
+  const { products } = useAdminStore();
   const { slug } = useParams<{ slug: string }>();
   const product = products.find(p => p.slug === slug);
   const revealRef = useScrollReveal<HTMLDivElement>();

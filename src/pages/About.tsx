@@ -1,9 +1,11 @@
 import * as Icons from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Section, SectionHeader, Counter, useScrollReveal } from '../components/ui';
-import { businessInfo, getWhatsAppUrl, getPhoneUrl, categories } from '../data';
+import { getWhatsAppUrl, getPhoneUrl, categories } from '../data';
+import { useAdminStore } from '../admin/data/adminStore';
 
 export default function About() {
+  const { businessInfo } = useAdminStore();
   const revealRef = useScrollReveal<HTMLDivElement>();
   
   const values = [

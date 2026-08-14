@@ -706,13 +706,36 @@ export const whyChooseUs: Feature[] = [
 ];
 
 // Helper
+export function getBusinessInfo() {
+  try {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('saienterprises_admin_business') : null;
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        ...businessInfo,
+        ...parsed,
+        address: { ...businessInfo.address, ...(parsed.address || {}) },
+        hours: { ...businessInfo.hours, ...(parsed.hours || {}) },
+        social: { ...businessInfo.social, ...(parsed.social || {}) },
+      };
+    }
+  } catch {
+    /* fallback to initial static businessInfo */
+  }
+  return businessInfo;
+}
+
 export function getWhatsAppUrl(message?: string): string {
-  const msg = message || businessInfo.whatsappMessage;
-  return `https://wa.me/${businessInfo.whatsappRaw}?text=${encodeURIComponent(msg)}`;
+  const info = getBusinessInfo();
+  const msg = message || info.whatsappMessage || "Hi Sai Enterprises! I'm interested in your electrical products. Can you help me?";
+  const rawNumber = (info.whatsappRaw || info.whatsapp || '917978672521').replace(/[^0-9]/g, '');
+  return `https://wa.me/${rawNumber}?text=${encodeURIComponent(msg)}`;
 }
 
 export function getPhoneUrl(): string {
-  return `tel:+${businessInfo.phoneRaw}`;
+  const info = getBusinessInfo();
+  const rawNumber = (info.phoneRaw || info.phone || '917978672521').replace(/[^0-9]/g, '');
+  return `tel:+${rawNumber}`;
 }
 
 export function getProductEnquiryUrl(productName: string): string {

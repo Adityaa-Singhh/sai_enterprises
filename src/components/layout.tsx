@@ -8,7 +8,8 @@ import {
   MessageCircle,
   ChevronDown,
 } from 'lucide-react';
-import { businessInfo, getWhatsAppUrl, getPhoneUrl } from '../data';
+import { getWhatsAppUrl, getPhoneUrl } from '../data';
+import { useAdminStore } from '../admin/data/adminStore';
 import { ThemeToggleButton } from './ThemeToggle';
 
 const navLinks = [
@@ -238,6 +239,7 @@ export default function Navbar({ onQuote }: { onQuote: () => void }) {
 
 // ===== FOOTER =====
 export function Footer() {
+  const { businessInfo } = useAdminStore();
   const footerLinks = [
     {
       title: 'Products',

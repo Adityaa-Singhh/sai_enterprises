@@ -2,9 +2,11 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, ArrowRight, MessageCircle, Phone, Search, Award } from 'lucide-react';
 import { Section, Badge, useScrollReveal } from '../components/ui';
-import { brands, businessInfo, getWhatsAppUrl, getPhoneUrl, categories } from '../data';
+import { getWhatsAppUrl, getPhoneUrl } from '../data';
+import { useAdminStore } from '../admin/data/adminStore';
 
 export default function Brands() {
+  const { brands, categories, businessInfo } = useAdminStore();
   const revealRef = useScrollReveal<HTMLDivElement>();
   
   const authorizedBrandsCount = useMemo(() => 
