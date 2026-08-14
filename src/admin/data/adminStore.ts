@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
 import { formatDateTime } from '../../utils/dateUtils';
 import { 
+  collection, doc, updateDoc, onSnapshot, query, orderBy, serverTimestamp 
+} from 'firebase/firestore';
+import { db } from '../../lib/firebase';
+import { COLLECTIONS } from '../../lib/firestore-types';
+import { updateEnquiryStatus as updateEnquiryStatusInFirestore } from '../../services/enquiryService';
+import { 
   products as initialProducts, 
   categories as initialCategories, 
   brands as initialBrands, 
@@ -288,6 +294,46 @@ export function useAdminStore() {
   useEffect(() => { localStorage.setItem(KEY_CONTENT, JSON.stringify(homepageContent)); }, [homepageContent]);
   useEffect(() => { localStorage.setItem(KEY_ACTIVITIES, JSON.stringify(activities)); }, [activities]);
 
+  // Firestore Real-Time Listener for Enquiries (Cross-Device Sync)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const q = query(collection(db, COLLECTIONS.ENQUIRIES), orderBy('createdAt', 'desc'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+          const firestoreEnquiries: AdminEnquiry[] = snapshot.docs.map((docSnap) => {
+            const data = docSnap.data();
+            const createdDate = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
+            const timestampMillis = data.createdAt?.toMillis ? data.createdAt.toMillis() : Date.now();
+            return {
+              id: docSnap.id,
+              customerName: data.customerName || 'Anonymous Customer',
+              phone: data.phone || '',
+              email: data.email || undefined,
+              productRequirement: data.productRequirement || 'General Enquiry',
+              message: data.message || '',
+              date: formatDateTime(createdDate),
+              timestamp: timestampMillis,
+              source: data.source || 'Web Quote',
+              status: data.status || 'NEW',
+              priority: data.priority || 'MEDIUM',
+              internalNotes: data.internalNotes || [],
+            };
+          });
+
+          setEnquiries(firestoreEnquiries);
+        }
+      }, (err) => {
+        console.warn('[AdminStore] Firestore real-time enquiry sync note:', err);
+      });
+
+      return () => unsubscribe();
+    } catch {
+      // Fall back to local state if Firestore is unavailable
+    }
+  }, []);
+
   // Log Helper
   const logActivity = (action: string, resource: string, details?: string, status: 'SUCCESS' | 'WARNING' | 'INFO' = 'SUCCESS') => {
     const newAct: AdminActivityItem = {
@@ -408,18 +454,30 @@ export function useAdminStore() {
     if (target) {
       logActivity('Updated Enquiry Status', `Enquiry #${id} (${target.customerName})`, `Status changed to ${status}`);
     }
+    // Sync to Cloud Firestore in real-time for cross-device synchronization
+    updateEnquiryStatusInFirestore(id, status as any).catch(err => {
+      console.warn('[AdminStore] Firestore status update error:', err);
+    });
   };
 
-  const addEnquiryNote = (enquiryId: string, author: string, note: string) => {
+  const addEnquiryNote = (enquiryId: string, author: string, noteText: string) => {
     const newNote = {
       id: `note-${Date.now()}`,
       author,
-      note,
-      date: 'Just now'
+      note: noteText,
+      date: formatDateTime(new Date())
     };
     setEnquiries(prev => prev.map(e => {
       if (e.id === enquiryId) {
-        return { ...e, internalNotes: [newNote, ...e.internalNotes] };
+        const updatedNotes = [newNote, ...e.internalNotes];
+        const docRef = doc(db, COLLECTIONS.ENQUIRIES, enquiryId);
+        updateDoc(docRef, {
+          internalNotes: updatedNotes,
+          updatedAt: serverTimestamp()
+        }).catch(err => {
+          console.warn('[AdminStore] Firestore note update error:', err);
+        });
+        return { ...e, internalNotes: updatedNotes };
       }
       return e;
     }));
