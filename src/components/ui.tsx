@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, forwardRef, type ReactNode, type Ref } from 'react';
 
 import { useAdminStore } from '../admin/data/adminStore';
+import { submitEnquiry } from '../services/enquiryService';
 
 // ===== Scroll Reveal Hook =====
 export function useScrollReveal<T extends HTMLElement>() {
@@ -294,19 +295,35 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
 
   const { addEnquiry } = useAdminStore();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    const messageText = formData.message
+      ? `${formData.message}${formData.quantity ? ' | Qty: ' + formData.quantity : ''}`
+      : (formData.quantity ? `Qty: ${formData.quantity}` : 'No notes');
+
     addEnquiry({
       customerName: formData.name,
       phone: formData.phone,
       productRequirement: formData.product,
-      message: formData.message ? `${formData.message}${formData.quantity ? ' | Qty: ' + formData.quantity : ''}` : (formData.quantity ? `Qty: ${formData.quantity}` : 'No notes'),
+      message: messageText,
       date: new Date().toISOString().split('T')[0],
       timestamp: Date.now(),
       source: 'Web Quote',
       priority: 'MEDIUM',
     });
+
+    try {
+      await submitEnquiry({
+        customerName: formData.name,
+        phone: formData.phone,
+        productRequirement: formData.product,
+        message: messageText,
+        source: 'Web Quote',
+      });
+    } catch (err) {
+      console.warn('[QuoteModal] Firestore enquiry submission queued locally:', err);
+    }
 
     setSubmitted(true);
     setTimeout(() => {

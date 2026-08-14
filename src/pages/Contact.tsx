@@ -3,6 +3,7 @@ import { Phone, MessageCircle, Mail, MapPin, Clock, Send, Check, ArrowRight } fr
 import { Section, SectionHeader, useScrollReveal } from '../components/ui';
 import { businessInfo, getWhatsAppUrl, getPhoneUrl } from '../data';
 import { useAdminStore } from '../admin/data/adminStore';
+import { submitEnquiry } from '../services/enquiryService';
 
 interface ContactProps {
   onQuote: () => void;
@@ -26,28 +27,44 @@ export default function Contact({ onQuote }: ContactProps) {
     setFormState(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
+    const messageText = formState.message
+      ? `${formState.message}${formState.quantity ? ' | Qty: ' + formState.quantity : ''}`
+      : (formState.quantity ? `Qty: ${formState.quantity}` : 'General Inquiry');
+
+    // 1. Save to local admin store for instant response
     addEnquiry({
       customerName: formState.name,
       phone: formState.phone,
       productRequirement: formState.requirement,
-      message: formState.message ? `${formState.message}${formState.quantity ? ' | Qty: ' + formState.quantity : ''}` : (formState.quantity ? `Qty: ${formState.quantity}` : 'General Inquiry'),
+      message: messageText,
       date: new Date().toISOString().split('T')[0],
       timestamp: Date.now(),
       source: 'Contact Form',
       priority: 'HIGH',
     });
 
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSuccess(true);
-      setFormState({ name: '', phone: '', requirement: '', quantity: '', message: '' });
-      
-      setTimeout(() => setIsSuccess(false), 5000);
-    }, 800);
+    // 2. Persist to Firestore cloud database
+    try {
+      await submitEnquiry({
+        customerName: formState.name,
+        phone: formState.phone,
+        productRequirement: formState.requirement,
+        message: messageText,
+        source: 'Contact Form',
+      });
+    } catch (err) {
+      console.warn('[Contact] Firestore enquiry submission queued locally:', err);
+    }
+
+    setIsSubmitting(false);
+    setIsSuccess(true);
+    setFormState({ name: '', phone: '', requirement: '', quantity: '', message: '' });
+    
+    setTimeout(() => setIsSuccess(false), 5000);
   };
 
   return (

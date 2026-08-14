@@ -7,11 +7,15 @@ import {
   Save, 
   CheckCircle2, 
   Download, 
-  AlertTriangle
+  AlertTriangle,
+  CloudUpload,
+  RefreshCw,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStore } from '../data/adminStore';
 import { AdminBreadcrumbs, ConfirmationModal } from '../components/AdminUI';
+import { seedAllCollectionsClient } from '../../services/seedClient';
 
 export const AdminSettings: React.FC = () => {
   const { userProfile } = useAuth();
@@ -34,10 +38,38 @@ export const AdminSettings: React.FC = () => {
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [inventoryAlerts, setInventoryAlerts] = useState(true);
 
-  // Modals
+  // Modals & Feedback
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [passSavedSuccess, setPassSavedSuccess] = useState(false);
+
+  // Cloud Firestore Seeding State
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [seedProgress, setSeedProgress] = useState(0);
+  const [seedMessage, setSeedMessage] = useState('');
+  const [seedResult, setSeedResult] = useState<{ success: boolean; text: string } | null>(null);
+
+  const handleSeedFirestore = async () => {
+    if (!userProfile?.uid) {
+      alert('You must be logged in as an administrator to initialize the database.');
+      return;
+    }
+    setIsSeeding(true);
+    setSeedResult(null);
+    setSeedProgress(5);
+    setSeedMessage('Initializing...');
+
+    const res = await seedAllCollectionsClient(userProfile.uid, (msg, pct) => {
+      setSeedMessage(msg);
+      setSeedProgress(pct);
+    });
+
+    setIsSeeding(false);
+    setSeedResult({
+      success: res.success,
+      text: res.message,
+    });
+  };
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -376,6 +408,79 @@ export const AdminSettings: React.FC = () => {
       {/* Tab 4: Backup & Reset */}
       {activeTab === 'backup' && (
         <div className="space-y-6">
+          {/* Cloud Firestore Initialization Card */}
+          <div className="glass-card rounded-3xl p-6 sm:p-8 border border-volt/30 space-y-4 shadow-2xl relative overflow-hidden bg-gradient-to-br from-dark-1 to-dark-2">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-volt/15 text-volt border border-volt/30">
+                  <CloudUpload className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white tracking-tight">
+                    Initialize & Seed Cloud Firestore
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Direct browser-to-cloud synchronization for Sai Enterprises database
+                  </p>
+                </div>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-volt/10 text-volt border border-volt/30 text-xs font-bold flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                Live Cloud Sync
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-300 font-normal leading-relaxed">
+              Populates your live Firebase Firestore project (<code>saienterprises-90c6b</code>) with all products, categories, authorized brands (PMCona, Havells, Polycab), gallery items, customer testimonials, FAQs, and business contacts in a single click.
+            </p>
+
+            {isSeeding && (
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2 animate-fade-in">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-volt flex items-center gap-2">
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    {seedMessage}
+                  </span>
+                  <span className="font-mono text-slate-400">{seedProgress}%</span>
+                </div>
+                <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-volt h-2 rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(0,229,255,0.8)]"
+                    style={{ width: `${seedProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {seedResult && (
+              <div
+                className={`p-4 rounded-2xl border text-xs flex items-center gap-3 animate-scale-in ${
+                  seedResult.success
+                    ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                    : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
+                }`}
+              >
+                {seedResult.success ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                ) : (
+                  <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+                )}
+                <span>{seedResult.text}</span>
+              </div>
+            )}
+
+            <div className="pt-2 flex items-center gap-3">
+              <button
+                onClick={handleSeedFirestore}
+                disabled={isSeeding}
+                className="btn-primary py-3 px-6 rounded-full text-xs font-bold shadow-lg flex items-center gap-2 disabled:opacity-50"
+              >
+                <CloudUpload className="w-4 h-4" />
+                <span>{isSeeding ? 'Writing to Firestore...' : 'Seed Live Firestore Database'}</span>
+              </button>
+            </div>
+          </div>
+
           <div className="glass-card rounded-3xl p-6 sm:p-8 border border-white/10 space-y-4 shadow-xl">
             <h3 className="text-lg font-bold text-white tracking-tight border-b border-white/10 pb-3">
               Export Full Database Backup
