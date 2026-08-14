@@ -22,36 +22,17 @@ import {
 } from 'firebase/storage';
 
 // ---------------------------------------------------------------------------
-// Configuration — values sourced from .env.local (never committed to Git)
+// Configuration — sourced from VITE_FIREBASE_* env vars with production fallbacks
 // ---------------------------------------------------------------------------
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyCzH4adr9PKGAkqRHQuzqSzcpO3_GLKmeA',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'saienterprises-90c6b.firebaseapp.com',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'saienterprises-90c6b',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'saienterprises-90c6b.firebasestorage.app',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '189441387992',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:189441387992:web:678c0898495f8fa88216ad',
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-PQEVRPH9B3',
 };
-
-// Validate that all required env variables are present
-const requiredKeys: (keyof typeof firebaseConfig)[] = [
-  'apiKey',
-  'authDomain',
-  'projectId',
-  'storageBucket',
-  'messagingSenderId',
-  'appId',
-];
-
-for (const key of requiredKeys) {
-  if (!firebaseConfig[key]) {
-    throw new Error(
-      `[Firebase] Missing required environment variable: VITE_FIREBASE_${key.toUpperCase()}. ` +
-        `Check your .env.local file.`
-    );
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Initialize Firebase App (singleton — safe for HMR)
