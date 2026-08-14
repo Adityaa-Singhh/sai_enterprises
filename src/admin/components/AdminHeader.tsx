@@ -14,7 +14,7 @@ import {
   Package,
   Inbox
 } from 'lucide-react';
-import { useAuth, type UserRole } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { useAdminStore } from '../data/adminStore';
 import { ThemeToggleButton } from '../../components/ThemeToggle';
 
@@ -23,7 +23,7 @@ interface AdminHeaderProps {
 }
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({ onToggleMobileMenu }) => {
-  const { user, logout, switchRole } = useAuth();
+  const { userProfile, logout } = useAuth();
   const { enquiries, products } = useAdminStore();
   const location = useLocation();
   const navigate = useNavigate();
@@ -253,11 +253,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onToggleMobileMenu }) 
               onClick={() => setProfileOpen(!profileOpen)}
               className="flex items-center gap-2 p-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
             >
-              <img
-                src={user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
-                alt={user?.name || 'Admin'}
-                className="w-7 h-7 rounded-full object-cover border border-volt/40"
-              />
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-volt/80 to-blue-500/80 flex items-center justify-center border border-volt/40 text-dark-0 text-[11px] font-extrabold">
+                {userProfile?.displayName?.[0]?.toUpperCase() ?? 'A'}
+              </div>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 mr-1 hidden sm:block" />
             </button>
 
@@ -265,35 +263,15 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onToggleMobileMenu }) 
               <div className="absolute right-0 mt-2 w-64 bg-dark-1 border border-white/15 rounded-3xl p-3 shadow-2xl z-50 animate-scale-in">
                 {/* User Info Header */}
                 <div className="p-3 border-b border-white/10 mb-2">
-                  <div className="font-extrabold text-white text-sm">{user?.name}</div>
-                  <div className="text-xs text-slate-400 truncate">{user?.email}</div>
+                  <div className="font-extrabold text-white text-sm">{userProfile?.displayName}</div>
+                  <div className="text-xs text-slate-400 truncate">{userProfile?.email}</div>
                   <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-volt/15 text-volt border border-volt/30">
                     <ShieldCheck className="w-3 h-3" />
-                    Role: {user?.role}
+                    Role: {userProfile?.role}
                   </div>
                 </div>
 
-                {/* Quick Role Switcher for Testing */}
-                <div className="p-2 bg-white/5 rounded-2xl border border-white/5 mb-2">
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 px-1">
-                    Demo Role Switcher:
-                  </div>
-                  <div className="grid grid-cols-3 gap-1">
-                    {(['OWNER', 'MANAGER', 'STAFF'] as UserRole[]).map((r) => (
-                      <button
-                        key={r}
-                        onClick={() => switchRole(r)}
-                        className={`py-1 rounded-xl text-[10px] font-bold transition-all ${
-                          user?.role === r
-                            ? 'bg-volt text-dark-0 shadow-[0_0_10px_rgba(0,229,255,0.4)]'
-                            : 'bg-dark-2 text-slate-300 hover:text-white hover:bg-white/10'
-                        }`}
-                      >
-                        {r}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+
 
                 {/* Dropdown Navigation */}
                 <div className="space-y-1">
@@ -306,7 +284,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onToggleMobileMenu }) 
                   </button>
 
                   <button
-                    onClick={() => { setProfileOpen(false); logout(); navigate('/admin/login'); }}
+                    onClick={async () => { setProfileOpen(false); await logout(); navigate('/admin/login', { replace: true }); }}
                     className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-500/10 text-left transition-colors"
                   >
                     <LogOut className="w-4 h-4" />

@@ -42,7 +42,7 @@ interface NavGroup {
 }
 
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({ onCloseMobile }) => {
-  const { user, logout, hasPermission } = useAuth();
+  const { userProfile, logout, hasPermission } = useAuth();
   const { enquiries } = useAdminStore();
 
   const newEnquiriesCount = enquiries.filter(e => e.status === 'NEW').length;
@@ -106,17 +106,15 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ onCloseMobile }) => 
         </Link>
 
         {/* Current User Role Badge */}
-        {user && (
+        {userProfile && (
           <div className="mt-4 p-3 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <img
-                src={user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
-                alt={user.name}
-                className="w-7 h-7 rounded-full object-cover border border-volt/40"
-              />
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-volt/80 to-blue-500/80 flex items-center justify-center border border-volt/40 text-dark-0 text-[11px] font-extrabold shrink-0">
+                {userProfile.displayName?.[0]?.toUpperCase() ?? 'A'}
+              </div>
               <div className="truncate">
-                <div className="text-xs font-bold text-white truncate">{user.name}</div>
-                <div className="text-[10px] text-volt font-semibold uppercase tracking-wider">{user.role}</div>
+                <div className="text-xs font-bold text-white truncate">{userProfile.displayName}</div>
+                <div className="text-[10px] text-volt font-semibold uppercase tracking-wider">{userProfile.role}</div>
               </div>
             </div>
           </div>

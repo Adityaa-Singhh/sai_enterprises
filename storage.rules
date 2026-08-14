@@ -1,0 +1,83 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ======================================================================
+    // HELPER FUNCTIONS
+    // ======================================================================
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Validate image content type and size
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*') &&
+             request.resource.size < 5 * 1024 * 1024; // 5 MB limit
+    }
+
+    // ======================================================================
+    // DEFAULT — deny everything not explicitly allowed
+    // ======================================================================
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // ======================================================================
+    // PRODUCT IMAGES
+    // Path: products/{productId}/{filename}
+    // Public read | Admin write only
+    // ======================================================================
+    match /products/{productId}/{filename} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidImage();
+      allow delete: if isSignedIn();
+    }
+
+    // ======================================================================
+    // BRAND LOGOS
+    // Path: brands/{brandId}/{filename}
+    // Public read | Admin write only
+    // ======================================================================
+    match /brands/{brandId}/{filename} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidImage();
+      allow delete: if isSignedIn();
+    }
+
+    // ======================================================================
+    // GALLERY IMAGES
+    // Path: gallery/{imageId}/{filename}
+    // Public read | Admin write only
+    // ======================================================================
+    match /gallery/{imageId}/{filename} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidImage();
+      allow delete: if isSignedIn();
+    }
+
+    // ======================================================================
+    // CATEGORY IMAGES
+    // Path: categories/{categoryId}/{filename}
+    // ======================================================================
+    match /categories/{categoryId}/{filename} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidImage();
+      allow delete: if isSignedIn();
+    }
+
+    // ======================================================================
+    // HOMEPAGE BANNERS
+    // Path: banners/{filename}
+    // Public read | Admin write only
+    // ======================================================================
+    match /banners/{filename} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidImage();
+      allow delete: if isSignedIn();
+    }
+
+  }
+}

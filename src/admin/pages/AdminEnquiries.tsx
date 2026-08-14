@@ -13,7 +13,7 @@ import { useAuth } from '../context/AuthContext';
 
 export const AdminEnquiries: React.FC = () => {
   const { enquiries, updateEnquiryStatus, addEnquiryNote } = useAdminStore();
-  const { user } = useAuth();
+  const { userProfile } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -46,13 +46,13 @@ export const AdminEnquiries: React.FC = () => {
     e.preventDefault();
     if (!selectedEnquiry || !newNoteText.trim()) return;
 
-    addEnquiryNote(selectedEnquiry.id, user?.name || 'Admin', newNoteText.trim());
+    addEnquiryNote(selectedEnquiry.id, userProfile?.displayName || 'Admin', newNoteText.trim());
     
     // Update local modal state
     const updated = {
       ...selectedEnquiry,
       internalNotes: [
-        { id: `note-${Date.now()}`, author: user?.name || 'Admin', note: newNoteText.trim(), date: 'Just now' },
+        { id: `note-${Date.now()}`, author: userProfile?.displayName || 'Admin', note: newNoteText.trim(), date: 'Just now' },
         ...selectedEnquiry.internalNotes
       ]
     };

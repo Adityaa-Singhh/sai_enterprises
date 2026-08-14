@@ -14,12 +14,12 @@ import { useAdminStore } from '../data/adminStore';
 import { AdminBreadcrumbs, ConfirmationModal } from '../components/AdminUI';
 
 export const AdminSettings: React.FC = () => {
-  const { user } = useAuth();
+  const { userProfile } = useAuth();
   const { resetToFactoryDefaults, products, categories, brands, enquiries } = useAdminStore();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications' | 'backup'>('profile');
-  const [name, setName] = useState(user?.name || 'Suresh Sharma');
-  const [email, setEmail] = useState(user?.email || 'owner@saienterprises.in');
+  const [name, setName] = useState(userProfile?.displayName || 'Admin');
+  const [email, setEmail] = useState(userProfile?.email || '');
   const [phone, setPhone] = useState('+91 79786 72521');
 
   // Security Form
@@ -136,7 +136,7 @@ export const AdminSettings: React.FC = () => {
               <p className="text-xs text-slate-400">Personal details for your authorized store account</p>
             </div>
             <span className="px-3 py-1 rounded-full bg-volt/15 text-volt border border-volt/30 text-xs font-black">
-              Role: {user?.role || 'OWNER'}
+              Role: {userProfile?.role || 'OWNER'}
             </span>
           </div>
 
@@ -149,11 +149,9 @@ export const AdminSettings: React.FC = () => {
 
           <form onSubmit={handleSaveProfile} className="space-y-4">
             <div className="flex items-center gap-4">
-              <img
-                src={user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
-                alt="Profile"
-                className="w-16 h-16 rounded-full object-cover border-2 border-volt"
-              />
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-volt/80 to-blue-500/80 flex items-center justify-center border-2 border-volt text-dark-0 text-2xl font-extrabold">
+                {userProfile?.displayName?.[0]?.toUpperCase() ?? 'A'}
+              </div>
               <div>
                 <button type="button" className="btn-secondary py-1.5 px-4 rounded-full text-xs font-bold text-white border border-white/10">
                   Change Avatar

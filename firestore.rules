@@ -1,0 +1,246 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ======================================================================
+    // HELPER FUNCTIONS
+    // ======================================================================
+
+    // Check if user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Get the requesting user's Firestore profile
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Get role of the requesting user
+    function getRole() {
+      return getUserData().role;
+    }
+
+    // Get status of the requesting user
+    function getStatus() {
+      return getUserData().status;
+    }
+
+    // Check if the requesting user is an active admin (any role)
+    function isActiveAdmin() {
+      return isSignedIn() &&
+        getStatus() == 'ACTIVE' &&
+        getRole() in ['OWNER', 'MANAGER', 'STAFF'];
+    }
+
+    // Check if the requesting user has Owner role
+    function isOwner() {
+      return isSignedIn() &&
+        getStatus() == 'ACTIVE' &&
+        getRole() == 'OWNER';
+    }
+
+    // Check if the requesting user has Manager or above role
+    function isManagerOrAbove() {
+      return isSignedIn() &&
+        getStatus() == 'ACTIVE' &&
+        getRole() in ['OWNER', 'MANAGER'];
+    }
+
+    // Check if the requesting user is Staff or above
+    function isStaffOrAbove() {
+      return isActiveAdmin();
+    }
+
+    // ======================================================================
+    // DEFAULT DENY — all paths not explicitly matched are denied
+    // ======================================================================
+
+    // ======================================================================
+    // USERS COLLECTION
+    // ======================================================================
+    match /users/{uid} {
+      // Any active admin can read their own document
+      allow read: if isSignedIn() && request.auth.uid == uid;
+
+      // Owner can read ALL user documents
+      allow read: if isOwner();
+
+      // Users CANNOT create their own user documents (done server-side / by Owner)
+      allow create: if isOwner();
+
+      // Users CAN update their own displayName and phone — but NOT role or status
+      allow update: if isSignedIn() &&
+        request.auth.uid == uid &&
+        !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['role', 'status', 'uid', 'createdAt']);
+
+      // Only Owner can update role and status
+      allow update: if isOwner() &&
+        request.auth.uid != uid || // Owner cannot change their own role/status via app
+        (request.auth.uid == uid &&
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['role', 'status']));
+
+      // Nobody can delete user documents (disable instead)
+      allow delete: if false;
+    }
+
+    // ======================================================================
+    // CATEGORIES
+    // ======================================================================
+    match /categories/{categoryId} {
+      // Public can read active categories
+      allow read: if resource.data.active == true;
+
+      // Active admins can read all categories
+      allow read: if isActiveAdmin();
+
+      // Manager and above can create/update
+      allow create, update: if isManagerOrAbove();
+
+      // Only Owner can delete categories
+      allow delete: if isOwner();
+    }
+
+    // ======================================================================
+    // BRANDS
+    // ======================================================================
+    match /brands/{brandId} {
+      allow read: if resource.data.active == true;
+      allow read: if isActiveAdmin();
+      allow create, update: if isManagerOrAbove();
+      allow delete: if isOwner();
+    }
+
+    // ======================================================================
+    // PRODUCTS
+    // ======================================================================
+    match /products/{productId} {
+      // Public can read published products
+      allow read: if resource.data.published == true;
+
+      // Active admins can read all products
+      allow read: if isActiveAdmin();
+
+      // Manager+ can create/update products
+      allow create, update: if isManagerOrAbove();
+
+      // Only Owner can delete products
+      allow delete: if isOwner();
+    }
+
+    // ======================================================================
+    // GALLERY
+    // ======================================================================
+    match /gallery/{imageId} {
+      // Gallery is publicly readable
+      allow read: if true;
+
+      // Manager+ can upload/update/delete gallery
+      allow create, update, delete: if isManagerOrAbove();
+    }
+
+    // ======================================================================
+    // TESTIMONIALS
+    // ======================================================================
+    match /testimonials/{testimonialId} {
+      // Public can read approved, active testimonials only
+      allow read: if resource.data.approved == true && resource.data.active == true;
+
+      // Active admins can read all testimonials
+      allow read: if isActiveAdmin();
+
+      // Manager+ can manage testimonials
+      allow create, update, delete: if isManagerOrAbove();
+    }
+
+    // ======================================================================
+    // FAQs
+    // ======================================================================
+    match /faqs/{faqId} {
+      // Public can read active FAQs
+      allow read: if resource.data.active == true;
+
+      // Admin can read all
+      allow read: if isActiveAdmin();
+
+      // Manager+ can manage FAQs
+      allow create, update, delete: if isManagerOrAbove();
+    }
+
+    // ======================================================================
+    // ENQUIRIES
+    // ======================================================================
+    match /enquiries/{enquiryId} {
+      // PUBLIC: Can only CREATE new enquiries
+      // Cannot read, update, or delete existing enquiries
+      allow create: if
+        request.resource.data.keys().hasAll([
+          'customerName', 'phone', 'productRequirement', 'message', 'source', 'status'
+        ]) &&
+        request.resource.data.status == 'NEW' &&
+        request.resource.data.internalNotes == [] &&
+        request.resource.data.customerName is string &&
+        request.resource.data.customerName.size() > 0 &&
+        request.resource.data.phone is string &&
+        request.resource.data.phone.size() > 0;
+
+      // Public CANNOT read enquiries
+      allow read: if isStaffOrAbove();
+
+      // Staff can update status only (not notes or other fields)
+      allow update: if isStaffOrAbove() &&
+        (request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'updatedAt']) ||
+         isManagerOrAbove());
+
+      // Only Owner can permanently delete enquiries
+      allow delete: if isOwner();
+    }
+
+    // ======================================================================
+    // BUSINESS INFO (singleton)
+    // ======================================================================
+    match /businessInfo/{docId} {
+      // Public can always read business info
+      allow read: if true;
+
+      // Only Owner or Manager can update
+      allow write: if isManagerOrAbove();
+
+      // Nobody can delete the business info document
+      allow delete: if false;
+    }
+
+    // ======================================================================
+    // ADMIN LOGS
+    // ======================================================================
+    match /adminLogs/{logId} {
+      // Active admins can read logs
+      allow read: if isActiveAdmin();
+
+      // Anyone authenticated (any admin) can write logs (non-sensitive)
+      allow create: if isActiveAdmin();
+
+      // Nobody can update or delete logs
+      allow update, delete: if false;
+    }
+
+    // ======================================================================
+    // ANALYTICS EVENTS
+    // ======================================================================
+    match /analyticsEvents/{eventId} {
+      // Anyone can create analytics events (public + admin)
+      allow create: if true;
+
+      // Only admins can read analytics
+      allow read: if isActiveAdmin();
+
+      // Nobody can modify or delete events
+      allow update, delete: if false;
+    }
+
+  }
+}

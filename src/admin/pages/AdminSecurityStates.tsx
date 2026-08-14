@@ -8,10 +8,8 @@ import {
   ServerCrash
 } from 'lucide-react';
 import { AdminBreadcrumbs } from '../components/AdminUI';
-import { useAuth } from '../context/AuthContext';
 
 export const AdminSecurityStates: React.FC = () => {
-  const { switchRole } = useAuth();
   const [activeState, setActiveState] = useState<
     '401' | '403' | 'expired' | 'disabled' | 'ratelimit' | '500'
   >('403');
@@ -72,12 +70,7 @@ export const AdminSecurityStates: React.FC = () => {
               Your account role does not have authorization to view this resource. Contact the business owner or switch to the Owner role for evaluation.
             </p>
             <div className="pt-2 flex justify-center gap-2">
-              <button
-                onClick={() => switchRole('OWNER')}
-                className="btn-primary py-2 px-5 rounded-full text-xs font-bold shadow-lg"
-              >
-                Elevate to OWNER
-              </button>
+              <span className="text-xs text-slate-400 italic">Contact the OWNER to request elevated access.</span>
             </div>
           </div>
         )}

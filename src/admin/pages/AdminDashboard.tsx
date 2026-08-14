@@ -28,7 +28,7 @@ import { useAuth } from '../context/AuthContext';
 
 export const AdminDashboard: React.FC = () => {
   const { products, categories, brands, enquiries, activities, updateEnquiryStatus } = useAdminStore();
-  const { user } = useAuth();
+  const { userProfile } = useAuth();
 
   const newEnquiries = enquiries.filter(e => e.status === 'NEW');
   const pendingEnquiries = enquiries.filter(e => e.status === 'CONTACTED' || e.status === 'IN_PROGRESS');
@@ -47,7 +47,7 @@ export const AdminDashboard: React.FC = () => {
               Live Store Console • Gurugram Sector 15
             </div>
             <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Welcome back, <span className="text-volt">{user?.name || 'Administrator'}</span>
+              Welcome back, <span className="text-volt">{userProfile?.displayName || 'Administrator'}</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl font-normal leading-relaxed">
               Sai Enterprises is experiencing strong demand today. You have <strong className="text-volt">{newEnquiries.length} unread customer inquiries</strong> requiring quotation and stock verification.

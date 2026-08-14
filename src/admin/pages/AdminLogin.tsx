@@ -1,31 +1,36 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { 
-  Zap, 
-  Lock, 
-  Mail, 
-  Eye, 
-  EyeOff, 
-  ShieldCheck, 
-  ArrowRight, 
-  AlertCircle, 
+import {
+  Zap,
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  ArrowRight,
+  AlertCircle,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const AdminLogin: React.FC = () => {
-  const { login, isLoading, error, clearError } = useAuth();
+  const { login, resetPassword, isLoading, error, clearError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [email, setEmail] = useState('owner@saienterprises.in');
-  const [password, setPassword] = useState('admin1234');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
 
-  const from = (location.state as any)?.from?.pathname || '/admin/dashboard';
+  // Forgot password modal state
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+
+  const from = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/admin/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,10 +41,28 @@ export const AdminLogin: React.FC = () => {
     }
   };
 
-  const handleDemoFill = (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword('admin1234');
+  const handleForgotPasswordOpen = () => {
+    setResetEmail(email); // pre-fill with current email input
+    setResetSent(false);
+    setResetError(null);
+    setForgotPasswordOpen(true);
     clearError();
+  };
+
+  const handleSendReset = async () => {
+    if (!resetEmail.trim()) {
+      setResetError('Please enter your email address.');
+      return;
+    }
+    setResetLoading(true);
+    setResetError(null);
+    const success = await resetPassword(resetEmail);
+    setResetLoading(false);
+    if (success) {
+      setResetSent(true);
+    } else {
+      setResetError('Could not send reset email. Please check the address and try again.');
+    }
   };
 
   return (
@@ -90,8 +113,10 @@ export const AdminLogin: React.FC = () => {
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
+                  id="admin-email"
                   type="email"
                   required
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); clearError(); }}
                   placeholder="name@saienterprises.in"
@@ -108,7 +133,7 @@ export const AdminLogin: React.FC = () => {
                 </label>
                 <button
                   type="button"
-                  onClick={() => setForgotPasswordOpen(true)}
+                  onClick={handleForgotPasswordOpen}
                   className="text-xs text-volt hover:underline font-semibold"
                 >
                   Forgot password?
@@ -117,8 +142,10 @@ export const AdminLogin: React.FC = () => {
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
+                  id="admin-password"
                   type={showPassword ? 'text' : 'password'}
                   required
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); clearError(); }}
                   placeholder="••••••••"
@@ -138,12 +165,13 @@ export const AdminLogin: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="btn-primary w-full py-3.5 rounded-2xl font-extrabold text-sm justify-center shadow-xl flex items-center gap-2 mt-2"
+              id="admin-login-btn"
+              className="btn-primary w-full py-3.5 rounded-2xl font-extrabold text-sm justify-center shadow-xl flex items-center gap-2 mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Authenticating...</span>
+                  <span>Authenticating…</span>
                 </>
               ) : (
                 <>
@@ -153,41 +181,6 @@ export const AdminLogin: React.FC = () => {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Credentials Box */}
-          <div className="pt-4 border-t border-white/10 space-y-2">
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">
-              One-Click Demo Roles:
-            </div>
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => handleDemoFill('owner@saienterprises.in')}
-                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-center transition-colors"
-              >
-                <div className="font-extrabold text-volt">Owner</div>
-                <div className="text-[10px] text-slate-400">Super Admin</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleDemoFill('manager@saienterprises.in')}
-                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-center transition-colors"
-              >
-                <div className="font-extrabold text-cyan-300">Manager</div>
-                <div className="text-[10px] text-slate-400">Inventory/Enq</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleDemoFill('staff@saienterprises.in')}
-                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-center transition-colors"
-              >
-                <div className="font-extrabold text-slate-200">Staff</div>
-                <div className="text-[10px] text-slate-400">View Only</div>
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Public Store Link */}
@@ -207,28 +200,35 @@ export const AdminLogin: React.FC = () => {
           <div className="glass-card max-w-md w-full p-6 sm:p-8 rounded-3xl border border-white/20 shadow-2xl space-y-4">
             <h3 className="text-xl font-extrabold text-white">Reset Admin Password</h3>
             <p className="text-xs text-slate-300 leading-relaxed font-normal">
-              Enter your registered work email. If verified, a secure reset token link will be dispatched.
+              Enter your registered work email address. A secure password reset link will be sent to your inbox.
             </p>
 
             {resetSent ? (
               <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-start gap-2.5">
                 <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-                <span>Password reset token dispatched to {email}. Check your inbox.</span>
+                <span>
+                  Reset link sent to <strong>{resetEmail}</strong>. Check your inbox and follow the instructions.
+                </span>
               </div>
             ) : (
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@saienterprises.in"
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-volt/50"
-              />
+              <>
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => { setResetEmail(e.target.value); setResetError(null); }}
+                  placeholder="name@saienterprises.in"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-volt/50"
+                />
+                {resetError && (
+                  <p className="text-xs text-rose-400">{resetError}</p>
+                )}
+              </>
             )}
 
             <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
               <button
                 type="button"
-                onClick={() => { setForgotPasswordOpen(false); setResetSent(false); }}
+                onClick={() => { setForgotPasswordOpen(false); setResetSent(false); setResetError(null); }}
                 className="px-4 py-2 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300"
               >
                 Close
@@ -236,9 +236,11 @@ export const AdminLogin: React.FC = () => {
               {!resetSent && (
                 <button
                   type="button"
-                  onClick={() => setResetSent(true)}
-                  className="btn-primary py-2 px-5 rounded-full text-xs font-bold shadow-lg"
+                  disabled={resetLoading}
+                  onClick={handleSendReset}
+                  className="btn-primary py-2 px-5 rounded-full text-xs font-bold shadow-lg flex items-center gap-1.5 disabled:opacity-60"
                 >
+                  {resetLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                   Send Reset Link
                 </button>
               )}
