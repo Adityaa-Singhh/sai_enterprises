@@ -79,5 +79,16 @@ service firebase.storage {
       allow delete: if isSignedIn();
     }
 
+    // ======================================================================
+    // AVATARS
+    // Path: avatars/{userId}/{filename}
+    // Public read | User write only
+    // ======================================================================
+    match /avatars/{userId}/{filename} {
+      allow read: if true;
+      allow write: if isSignedIn() && request.auth.uid == userId && isValidImage();
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
+
   }
 }

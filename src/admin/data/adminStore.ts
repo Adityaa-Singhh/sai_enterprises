@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatDateTime } from '../../utils/dateUtils';
 import { 
   products as initialProducts, 
   categories as initialCategories, 
@@ -391,6 +392,7 @@ export function useAdminStore() {
   const addEnquiry = (enquiry: Omit<AdminEnquiry, 'id' | 'status' | 'internalNotes'>) => {
     const newEnquiry: AdminEnquiry = {
       ...enquiry,
+      date: enquiry.date && enquiry.date.includes(',') ? enquiry.date : formatDateTime(new Date()),
       id: `enq-${Date.now()}`,
       status: 'NEW',
       internalNotes: [],

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, forwardRef, type ReactNode, type Ref } fro
 
 import { useAdminStore } from '../admin/data/adminStore';
 import { submitEnquiry } from '../services/enquiryService';
+import { formatDateTime } from '../utils/dateUtils';
 
 // ===== Scroll Reveal Hook =====
 export function useScrollReveal<T extends HTMLElement>() {
@@ -279,12 +280,15 @@ export function Counter({ end, suffix = '' }: { end: string | number; suffix?: s
 
 // ===== Quote Modal =====
 export function QuoteModal({ onClose }: { onClose: () => void }) {
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    product: '',
-    quantity: '',
-    message: '',
+  const DRAFT_KEY = 'saienterprises_draft_quote';
+
+  const [formData, setFormData] = useState(() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      return saved ? JSON.parse(saved) : { name: '', phone: '', product: '', quantity: '', message: '' };
+    } catch {
+      return { name: '', phone: '', product: '', quantity: '', message: '' };
+    }
   });
   const [submitted, setSubmitted] = useState(false);
 
@@ -292,6 +296,13 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
   }, []);
+
+  // Sync draft to localStorage on change
+  useEffect(() => {
+    if (!submitted) {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
+    }
+  }, [formData, submitted]);
 
   const { addEnquiry } = useAdminStore();
 
@@ -307,7 +318,7 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
       phone: formData.phone,
       productRequirement: formData.product,
       message: messageText,
-      date: new Date().toISOString().split('T')[0],
+      date: formatDateTime(new Date()),
       timestamp: Date.now(),
       source: 'Web Quote',
       priority: 'MEDIUM',
@@ -325,6 +336,7 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
       console.warn('[QuoteModal] Firestore enquiry submission queued locally:', err);
     }
 
+    localStorage.removeItem(DRAFT_KEY);
     setSubmitted(true);
     setTimeout(() => {
       onClose();

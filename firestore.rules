@@ -64,8 +64,8 @@ service cloud.firestore {
       // Any active admin can read their own document
       allow read: if isSignedIn() && request.auth.uid == uid;
 
-      // Owner can read ALL user documents
-      allow read: if isOwner();
+      // Owner can read other user documents
+      allow read: if isSignedIn() && request.auth.uid != uid && isOwner();
 
       // Users CANNOT create their own user documents (done server-side / by Owner)
       allow create: if isOwner();
@@ -76,9 +76,8 @@ service cloud.firestore {
         !request.resource.data.diff(resource.data).affectedKeys()
           .hasAny(['role', 'status', 'uid', 'createdAt']);
 
-      // Only Owner can update role and status
-      allow update: if isOwner() &&
-        request.auth.uid != uid || // Owner cannot change their own role/status via app
+      // Only Owner can update role and status of other users
+      allow update: if (request.auth.uid != uid && isOwner()) ||
         (request.auth.uid == uid &&
           !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['role', 'status']));

@@ -30,6 +30,10 @@ import {
   signOut,
   sendPasswordResetEmail,
   onAuthStateChanged,
+  updateProfile,
+  updatePassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
   type User,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -103,6 +107,12 @@ interface AuthContextType {
   logout: () => Promise<void>;
   /** Send password reset email */
   resetPassword: (email: string) => Promise<boolean>;
+  /** Update user profile data in Auth and Firestore */
+  updateProfileData: (data: { displayName?: string; phone?: string; avatarUrl?: string }) => Promise<boolean>;
+  /** Change password via re-authentication */
+  changePassword: (currentPass: string, newPass: string) => Promise<{ success: boolean; message?: string }>;
+  /** Save user security & notification settings */
+  updateUserSettings: (settings: Record<string, unknown>) => Promise<boolean>;
   /** Check RBAC permission for current user's role */
   hasPermission: (permission: Permission) => boolean;
   /** Clear current error */
@@ -140,7 +150,8 @@ async function fetchUserProfile(uid: string): Promise<FirestoreUser | null> {
       return snap.data() as FirestoreUser;
     }
     return null;
-  } catch {
+  } catch (err) {
+    console.error('[fetchUserProfile] Error fetching user profile:', err);
     return null;
   }
 }
@@ -243,6 +254,124 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   // ---------------------------------------------------------------------------
+  // updateProfileData
+  // ---------------------------------------------------------------------------
+  const updateProfileData = useCallback(
+    async (data: { displayName?: string; phone?: string; avatarUrl?: string }): Promise<boolean> => {
+      if (!currentUser) return false;
+      setError(null);
+      try {
+        if (data.displayName !== undefined || data.avatarUrl !== undefined) {
+          await updateProfile(currentUser, {
+            displayName: data.displayName !== undefined ? data.displayName : currentUser.displayName,
+            photoURL: data.avatarUrl !== undefined ? data.avatarUrl : currentUser.photoURL,
+          });
+        }
+
+        const userRef = doc(db, COLLECTIONS.USERS, currentUser.uid);
+        const updateData: Record<string, unknown> = {
+          updatedAt: serverTimestamp(),
+        };
+        if (data.displayName !== undefined) updateData.displayName = data.displayName;
+        if (data.phone !== undefined) updateData.phone = data.phone;
+        if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl;
+
+        await setDoc(userRef, updateData, { merge: true });
+
+        setUserProfile((prev) =>
+          prev
+            ? ({
+                ...prev,
+                ...(data.displayName !== undefined && { displayName: data.displayName }),
+                ...(data.phone !== undefined && { phone: data.phone }),
+                ...(data.avatarUrl !== undefined && { avatarUrl: data.avatarUrl }),
+              } as FirestoreUser)
+            : null
+        );
+        return true;
+      } catch (err: unknown) {
+        console.error('Failed to update profile:', err);
+        setError('Failed to update profile details. Please try again.');
+        return false;
+      }
+    },
+    [currentUser]
+  );
+
+  // ---------------------------------------------------------------------------
+  // changePassword
+  // ---------------------------------------------------------------------------
+  const changePassword = useCallback(
+    async (currentPass: string, newPass: string): Promise<{ success: boolean; message?: string }> => {
+      if (!currentUser || !currentUser.email) {
+        return { success: false, message: 'No active authenticated user.' };
+      }
+      setError(null);
+      try {
+        const credential = EmailAuthProvider.credential(currentUser.email, currentPass);
+        await reauthenticateWithCredential(currentUser, credential);
+        await updatePassword(currentUser, newPass);
+        return { success: true };
+      } catch (err: unknown) {
+        console.error('Failed to change password:', err);
+        const code = (err as { code?: string })?.code ?? '';
+        if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+          return { success: false, message: 'Current password is incorrect.' };
+        }
+        if (code === 'auth/weak-password') {
+          return { success: false, message: 'New password must be at least 6 characters long.' };
+        }
+        return { success: false, message: 'Failed to update password. Please check current credentials.' };
+      }
+    },
+    [currentUser]
+  );
+
+  // ---------------------------------------------------------------------------
+  // updateUserSettings
+  // ---------------------------------------------------------------------------
+  const updateUserSettings = useCallback(
+    async (newSettings: Record<string, unknown>): Promise<boolean> => {
+      if (!currentUser) return false;
+      setError(null);
+      try {
+        const userRef = doc(db, COLLECTIONS.USERS, currentUser.uid);
+        const currentSettings = userProfile?.settings || {};
+        const mergedSettings = { ...currentSettings, ...newSettings };
+
+        const updateData: Record<string, unknown> = {
+          settings: mergedSettings,
+          updatedAt: serverTimestamp(),
+        };
+
+        if (newSettings.twoFactorEnabled !== undefined) {
+          updateData.twoFactorEnabled = Boolean(newSettings.twoFactorEnabled);
+        }
+
+        await setDoc(userRef, updateData, { merge: true });
+
+        setUserProfile((prev) =>
+          prev
+            ? ({
+                ...prev,
+                settings: mergedSettings,
+                ...(newSettings.twoFactorEnabled !== undefined && {
+                  twoFactorEnabled: Boolean(newSettings.twoFactorEnabled),
+                }),
+              } as FirestoreUser)
+            : null
+        );
+        return true;
+      } catch (err) {
+        console.error('Failed to update user settings:', err);
+        setError('Failed to update settings in database.');
+        return false;
+      }
+    },
+    [currentUser, userProfile?.settings]
+  );
+
+  // ---------------------------------------------------------------------------
   // hasPermission
   // ---------------------------------------------------------------------------
   const hasPermission = useCallback(
@@ -267,6 +396,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         login,
         logout,
         resetPassword,
+        updateProfileData,
+        changePassword,
+        updateUserSettings,
         hasPermission,
         clearError,
       }}

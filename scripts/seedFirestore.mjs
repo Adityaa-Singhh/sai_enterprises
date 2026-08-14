@@ -40,7 +40,7 @@ if (getApps().length === 0) {
   }
 }
 
-const db = getFirestore();
+const db = getFirestore(getApps()[0], 'default');
 const now = Timestamp.now();
 
 // ---------------------------------------------------------------------------

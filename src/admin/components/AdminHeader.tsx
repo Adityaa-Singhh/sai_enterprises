@@ -253,8 +253,12 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onToggleMobileMenu }) 
               onClick={() => setProfileOpen(!profileOpen)}
               className="flex items-center gap-2 p-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
             >
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-volt/80 to-blue-500/80 flex items-center justify-center border border-volt/40 text-dark-0 text-[11px] font-extrabold">
-                {userProfile?.displayName?.[0]?.toUpperCase() ?? 'A'}
+              <div className="w-7 h-7 rounded-full overflow-hidden bg-gradient-to-br from-volt/80 to-blue-500/80 flex items-center justify-center border border-volt/40 text-dark-0 text-[11px] font-extrabold shrink-0">
+                {userProfile?.avatarUrl ? (
+                  <img src={userProfile.avatarUrl} alt={userProfile.displayName} className="w-full h-full object-cover" />
+                ) : (
+                  userProfile?.displayName?.[0]?.toUpperCase() ?? 'A'
+                )}
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 mr-1 hidden sm:block" />
             </button>

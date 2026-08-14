@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Shield, 
   Bell, 
@@ -10,33 +10,58 @@ import {
   AlertTriangle,
   CloudUpload,
   RefreshCw,
-  Sparkles
+  Sparkles,
+  Loader2
 } from 'lucide-react';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStore } from '../data/adminStore';
 import { AdminBreadcrumbs, ConfirmationModal } from '../components/AdminUI';
 import { seedAllCollectionsClient } from '../../services/seedClient';
 
 export const AdminSettings: React.FC = () => {
-  const { userProfile } = useAuth();
+  const { userProfile, updateProfileData, changePassword, updateUserSettings } = useAuth();
   const { resetToFactoryDefaults, products, categories, brands, enquiries } = useAdminStore();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications' | 'backup'>('profile');
   const [name, setName] = useState(userProfile?.displayName || 'Admin');
   const [email, setEmail] = useState(userProfile?.email || '');
-  const [phone, setPhone] = useState('+91 79786 72521');
+  const [phone, setPhone] = useState(userProfile?.phone || '');
+  const [avatarUrl, setAvatarUrl] = useState(userProfile?.avatarUrl || '');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Security Form
   const [currentPass, setCurrentPass] = useState('');
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-  const [sessionTimeout, setSessionTimeout] = useState('8h');
+  const [isChangingPass, setIsChangingPass] = useState(false);
+  const [passError, setPassError] = useState<string | null>(null);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(userProfile?.twoFactorEnabled || false);
+  const [sessionTimeout, setSessionTimeout] = useState((userProfile?.settings?.sessionTimeout as string) || '8h');
 
   // Notifications
-  const [waAlerts, setWaAlerts] = useState(true);
-  const [emailAlerts, setEmailAlerts] = useState(true);
-  const [inventoryAlerts, setInventoryAlerts] = useState(true);
+  const [waAlerts, setWaAlerts] = useState(userProfile?.settings?.waAlerts !== undefined ? Boolean(userProfile.settings.waAlerts) : true);
+  const [emailAlerts, setEmailAlerts] = useState(userProfile?.settings?.emailAlerts !== undefined ? Boolean(userProfile.settings.emailAlerts) : true);
+  const [inventoryAlerts, setInventoryAlerts] = useState(userProfile?.settings?.inventoryAlerts !== undefined ? Boolean(userProfile.settings.inventoryAlerts) : true);
+
+  // Sync state when userProfile changes
+  useEffect(() => {
+    if (userProfile) {
+      setName(userProfile.displayName || '');
+      setEmail(userProfile.email || '');
+      setPhone(userProfile.phone || '');
+      if (userProfile.avatarUrl) setAvatarUrl(userProfile.avatarUrl);
+      if (userProfile.twoFactorEnabled !== undefined) setTwoFactorEnabled(userProfile.twoFactorEnabled);
+      if (userProfile.settings?.sessionTimeout) setSessionTimeout(userProfile.settings.sessionTimeout as string);
+      if (userProfile.settings?.waAlerts !== undefined) setWaAlerts(Boolean(userProfile.settings.waAlerts));
+      if (userProfile.settings?.emailAlerts !== undefined) setEmailAlerts(Boolean(userProfile.settings.emailAlerts));
+      if (userProfile.settings?.inventoryAlerts !== undefined) setInventoryAlerts(Boolean(userProfile.settings.inventoryAlerts));
+    }
+  }, [userProfile]);
 
   // Modals & Feedback
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
@@ -71,23 +96,133 @@ export const AdminSettings: React.FC = () => {
     });
   };
 
-  const handleSaveProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3000);
-  };
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const handleSavePassword = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPass !== confirmPass) {
-      alert('New passwords do not match!');
+    if (!userProfile?.uid) {
+      alert('You must be logged in to change your avatar.');
       return;
     }
-    setPassSavedSuccess(true);
-    setCurrentPass('');
-    setNewPass('');
-    setConfirmPass('');
-    setTimeout(() => setPassSavedSuccess(false), 3000);
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file (PNG, JPG, WEBP).');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB.');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+
+    const convertToBase64 = (imgFile: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(imgFile);
+      });
+    };
+
+    try {
+      let url = '';
+      try {
+        const fileExt = file.name.split('.').pop() || 'jpg';
+        const storageRef = ref(storage, `avatars/${userProfile.uid}/avatar_${Date.now()}.${fileExt}`);
+        await uploadBytes(storageRef, file);
+        url = await getDownloadURL(storageRef);
+      } catch (storageErr) {
+        console.warn('Storage upload unavailable, falling back to base64 encoding:', storageErr);
+        url = await convertToBase64(file);
+      }
+
+      setAvatarUrl(url);
+      await updateProfileData({ avatarUrl: url });
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3000);
+    } catch (err) {
+      console.error('Avatar processing error:', err);
+      alert('Failed to update avatar image. Please try another image.');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingProfile(true);
+    const success = await updateProfileData({
+      displayName: name.trim(),
+      phone: phone.trim(),
+      avatarUrl: avatarUrl || undefined,
+    });
+    setIsSavingProfile(false);
+
+    if (success) {
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3000);
+    } else {
+      alert('Failed to save profile updates.');
+    }
+  };
+
+  const handleSavePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPassError(null);
+
+    if (newPass.length < 6) {
+      setPassError('New password must be at least 6 characters long.');
+      return;
+    }
+
+    if (newPass !== confirmPass) {
+      setPassError('New passwords do not match!');
+      return;
+    }
+
+    setIsChangingPass(true);
+    const res = await changePassword(currentPass, newPass);
+    setIsChangingPass(false);
+
+    if (res.success) {
+      setPassSavedSuccess(true);
+      setCurrentPass('');
+      setNewPass('');
+      setConfirmPass('');
+      setTimeout(() => setPassSavedSuccess(false), 4000);
+    } else {
+      setPassError(res.message || 'Failed to update password.');
+    }
+  };
+
+  const handleToggle2FA = async (enabled: boolean) => {
+    setTwoFactorEnabled(enabled);
+    const success = await updateUserSettings({ twoFactorEnabled: enabled });
+    if (success) {
+      alert(enabled ? 'Multi-Factor Authentication (2FA) enforcement enabled for your admin account.' : 'Multi-Factor Authentication disabled.');
+    }
+  };
+
+  const handleChangeSessionTimeout = async (timeout: string) => {
+    setSessionTimeout(timeout);
+    await updateUserSettings({ sessionTimeout: timeout });
+  };
+
+  const handleToggleWaAlerts = async (val: boolean) => {
+    setWaAlerts(val);
+    await updateUserSettings({ waAlerts: val });
+  };
+
+  const handleToggleEmailAlerts = async (val: boolean) => {
+    setEmailAlerts(val);
+    await updateUserSettings({ emailAlerts: val });
+  };
+
+  const handleToggleInventoryAlerts = async (val: boolean) => {
+    setInventoryAlerts(val);
+    await updateUserSettings({ inventoryAlerts: val });
   };
 
   const handleExportFullBackup = () => {
@@ -181,14 +316,37 @@ export const AdminSettings: React.FC = () => {
 
           <form onSubmit={handleSaveProfile} className="space-y-4">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-volt/80 to-blue-500/80 flex items-center justify-center border-2 border-volt text-dark-0 text-2xl font-extrabold">
-                {userProfile?.displayName?.[0]?.toUpperCase() ?? 'A'}
+              <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-volt/80 to-blue-500/80 flex items-center justify-center border-2 border-volt text-dark-0 text-2xl font-extrabold shadow-lg shrink-0">
+                {avatarUrl || userProfile?.avatarUrl ? (
+                  <img src={avatarUrl || userProfile?.avatarUrl} alt={name} className="w-full h-full object-cover" />
+                ) : (
+                  (name?.[0] || userProfile?.displayName?.[0] || 'A').toUpperCase()
+                )}
               </div>
               <div>
-                <button type="button" className="btn-secondary py-1.5 px-4 rounded-full text-xs font-bold text-white border border-white/10">
-                  Change Avatar
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+                <button
+                  type="button"
+                  disabled={isUploadingAvatar}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="btn-secondary py-1.5 px-4 rounded-full text-xs font-bold text-white border border-white/10 flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {isUploadingAvatar ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Uploading...</span>
+                    </>
+                  ) : (
+                    <span>Change Avatar</span>
+                  )}
                 </button>
-                <div className="text-[11px] text-slate-500 mt-1">Recommended: 300x300 JPG or PNG</div>
+                <div className="text-[11px] text-slate-500 mt-1">Recommended: 300x300 JPG, PNG, or WEBP</div>
               </div>
             </div>
 
@@ -212,10 +370,9 @@ export const AdminSettings: React.FC = () => {
                 </label>
                 <input
                   type="email"
-                  required
+                  disabled
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs text-white focus:outline-none focus:border-volt/50"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs text-slate-400 cursor-not-allowed"
                 />
               </div>
 
@@ -235,9 +392,19 @@ export const AdminSettings: React.FC = () => {
             <div className="pt-4 border-t border-white/10 flex justify-end">
               <button
                 type="submit"
-                className="btn-primary py-2.5 px-6 rounded-full text-xs font-bold shadow-lg flex items-center gap-2"
+                disabled={isSavingProfile}
+                className="btn-primary py-2.5 px-6 rounded-full text-xs font-bold shadow-lg flex items-center gap-2 disabled:opacity-50"
               >
-                <Save className="w-4 h-4" /> Save Profile
+                {isSavingProfile ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" /> Save Profile
+                  </>
+                )}
               </button>
             </div>
           </form>
@@ -255,7 +422,14 @@ export const AdminSettings: React.FC = () => {
             {passSavedSuccess && (
               <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-3 animate-scale-in">
                 <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-                <span>Password successfully changed!</span>
+                <span>Password successfully changed in Firebase Authentication!</span>
+              </div>
+            )}
+
+            {passError && (
+              <div className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-3 animate-scale-in">
+                <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+                <span>{passError}</span>
               </div>
             )}
 
@@ -268,7 +442,7 @@ export const AdminSettings: React.FC = () => {
                   type="password"
                   required
                   value={currentPass}
-                  onChange={(e) => setCurrentPass(e.target.value)}
+                  onChange={(e) => { setCurrentPass(e.target.value); setPassError(null); }}
                   placeholder="••••••••"
                   className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs text-white focus:outline-none focus:border-volt/50"
                 />
@@ -283,8 +457,8 @@ export const AdminSettings: React.FC = () => {
                     type="password"
                     required
                     value={newPass}
-                    onChange={(e) => setNewPass(e.target.value)}
-                    placeholder="Min. 8 characters"
+                    onChange={(e) => { setNewPass(e.target.value); setPassError(null); }}
+                    placeholder="Min. 6 characters"
                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs text-white focus:outline-none focus:border-volt/50"
                   />
                 </div>
@@ -297,7 +471,7 @@ export const AdminSettings: React.FC = () => {
                     type="password"
                     required
                     value={confirmPass}
-                    onChange={(e) => setConfirmPass(e.target.value)}
+                    onChange={(e) => { setConfirmPass(e.target.value); setPassError(null); }}
                     placeholder="••••••••"
                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs text-white focus:outline-none focus:border-volt/50"
                   />
@@ -307,9 +481,17 @@ export const AdminSettings: React.FC = () => {
               <div className="pt-3 border-t border-white/10 flex justify-end">
                 <button
                   type="submit"
-                  className="btn-primary py-2.5 px-6 rounded-full text-xs font-bold shadow-lg"
+                  disabled={isChangingPass}
+                  className="btn-primary py-2.5 px-6 rounded-full text-xs font-bold shadow-lg flex items-center gap-2 disabled:opacity-50"
                 >
-                  Update Password
+                  {isChangingPass ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Updating Password...</span>
+                    </>
+                  ) : (
+                    <span>Update Password</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -321,15 +503,15 @@ export const AdminSettings: React.FC = () => {
             </h3>
 
             <div className="space-y-4">
-              <label className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 cursor-pointer">
+              <label className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
                 <div>
                   <div className="text-xs font-bold text-white">Require 2FA via Authenticator App</div>
-                  <div className="text-[11px] text-slate-400">Enforce Google Authenticator / TOTP on all staff logins</div>
+                  <div className="text-[11px] text-slate-400">Enforce Multi-Factor Authentication (TOTP) on your admin account</div>
                 </div>
                 <input
                   type="checkbox"
                   checked={twoFactorEnabled}
-                  onChange={(e) => setTwoFactorEnabled(e.target.checked)}
+                  onChange={(e) => handleToggle2FA(e.target.checked)}
                   className="w-5 h-5 accent-cyan-400 rounded cursor-pointer"
                 />
               </label>
@@ -341,7 +523,7 @@ export const AdminSettings: React.FC = () => {
                 </div>
                 <select
                   value={sessionTimeout}
-                  onChange={(e) => setSessionTimeout(e.target.value)}
+                  onChange={(e) => handleChangeSessionTimeout(e.target.value)}
                   className="bg-dark-2 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-volt/50"
                 >
                   <option value="15m">15 Minutes</option>
@@ -363,41 +545,41 @@ export const AdminSettings: React.FC = () => {
           </h3>
 
           <div className="space-y-4">
-            <label className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 cursor-pointer">
+            <label className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
               <div>
                 <div className="text-xs font-bold text-white">Instant WhatsApp Lead Dispatch</div>
-                <div className="text-[11px] text-slate-400">Receive instant push notification when contractor submits quotation request</div>
+                <div className="text-[11px] text-slate-400 font-normal">Receive instant push notification when contractor submits quotation request</div>
               </div>
               <input
                 type="checkbox"
                 checked={waAlerts}
-                onChange={(e) => setWaAlerts(e.target.checked)}
+                onChange={(e) => handleToggleWaAlerts(e.target.checked)}
                 className="w-5 h-5 accent-cyan-400 rounded cursor-pointer"
               />
             </label>
 
-            <label className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 cursor-pointer">
+            <label className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
               <div>
                 <div className="text-xs font-bold text-white">Daily Email Lead Summary</div>
-                <div className="text-[11px] text-slate-400">Daily 08:00 PM email report with resolved vs pending quotations</div>
+                <div className="text-[11px] text-slate-400 font-normal">Daily 08:00 PM email report with resolved vs pending quotations</div>
               </div>
               <input
                 type="checkbox"
                 checked={emailAlerts}
-                onChange={(e) => setEmailAlerts(e.target.checked)}
+                onChange={(e) => handleToggleEmailAlerts(e.target.checked)}
                 className="w-5 h-5 accent-cyan-400 rounded cursor-pointer"
               />
             </label>
 
-            <label className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 cursor-pointer">
+            <label className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
               <div>
                 <div className="text-xs font-bold text-white">Low Stock Inventory Alerts</div>
-                <div className="text-[11px] text-slate-400">Notify when popular PMCona switches or Polycab wires fall out of stock</div>
+                <div className="text-[11px] text-slate-400 font-normal">Notify when popular PMCona switches or Polycab wires fall out of stock</div>
               </div>
               <input
                 type="checkbox"
                 checked={inventoryAlerts}
-                onChange={(e) => setInventoryAlerts(e.target.checked)}
+                onChange={(e) => handleToggleInventoryAlerts(e.target.checked)}
                 className="w-5 h-5 accent-cyan-400 rounded cursor-pointer"
               />
             </label>

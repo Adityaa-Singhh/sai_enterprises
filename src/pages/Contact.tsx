@@ -4,27 +4,38 @@ import { Section, SectionHeader, useScrollReveal } from '../components/ui';
 import { businessInfo, getWhatsAppUrl, getPhoneUrl } from '../data';
 import { useAdminStore } from '../admin/data/adminStore';
 import { submitEnquiry } from '../services/enquiryService';
+import { formatDateTime } from '../utils/dateUtils';
 
 interface ContactProps {
   onQuote: () => void;
 }
 
 export default function Contact({ onQuote }: ContactProps) {
+  const DRAFT_KEY = 'saienterprises_draft_contact';
   const { addEnquiry } = useAdminStore();
-  const [formState, setFormState] = useState({
-    name: '',
-    phone: '',
-    requirement: '',
-    quantity: '',
-    message: ''
+
+  const [formState, setFormState] = useState(() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      return saved ? JSON.parse(saved) : { name: '', phone: '', requirement: '', quantity: '', message: '' };
+    } catch {
+      return { name: '', phone: '', requirement: '', quantity: '', message: '' };
+    }
   });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const revealRef = useScrollReveal<HTMLDivElement>();
 
+  React.useEffect(() => {
+    if (!isSuccess) {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(formState));
+    }
+  }, [formState, isSuccess]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormState(prev => ({ ...prev, [name]: value }));
+    setFormState((prev: typeof formState) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,7 +52,7 @@ export default function Contact({ onQuote }: ContactProps) {
       phone: formState.phone,
       productRequirement: formState.requirement,
       message: messageText,
-      date: new Date().toISOString().split('T')[0],
+      date: formatDateTime(new Date()),
       timestamp: Date.now(),
       source: 'Contact Form',
       priority: 'HIGH',
@@ -60,6 +71,7 @@ export default function Contact({ onQuote }: ContactProps) {
       console.warn('[Contact] Firestore enquiry submission queued locally:', err);
     }
 
+    localStorage.removeItem(DRAFT_KEY);
     setIsSubmitting(false);
     setIsSuccess(true);
     setFormState({ name: '', phone: '', requirement: '', quantity: '', message: '' });

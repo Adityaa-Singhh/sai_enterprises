@@ -25,6 +25,7 @@ import {
 } from '../components/AdminCharts';
 import { useAdminStore } from '../data/adminStore';
 import { useAuth } from '../context/AuthContext';
+import { formatDateTime } from '../../utils/dateUtils';
 
 export const AdminDashboard: React.FC = () => {
   const { products, categories, brands, enquiries, activities, updateEnquiryStatus } = useAdminStore();
@@ -215,7 +216,7 @@ export const AdminDashboard: React.FC = () => {
                   <div className="text-[11px] text-slate-400 flex items-center gap-3">
                     <span>{enq.phone}</span>
                     <span>•</span>
-                    <span>{enq.date}</span>
+                    <span>{formatDateTime(enq.date)}</span>
                   </div>
                 </div>
 

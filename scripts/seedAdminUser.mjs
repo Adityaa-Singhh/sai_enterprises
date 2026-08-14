@@ -26,7 +26,7 @@ if (getApps().length === 0) {
   }
 }
 
-const db = getFirestore();
+const db = getFirestore(getApps()[0], 'default');
 
 async function main() {
   const [uid, email, displayName, role] = process.argv.slice(2);

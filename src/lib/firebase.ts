@@ -67,7 +67,7 @@ if (getApps().length === 0) {
 // Service Instances
 // ---------------------------------------------------------------------------
 export const auth: Auth = getAuth(app);
-export const db: Firestore = getFirestore(app);
+export const db: Firestore = getFirestore(app, 'default');
 export const storage: FirebaseStorage = getStorage(app);
 
 // ---------------------------------------------------------------------------

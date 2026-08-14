@@ -16,7 +16,6 @@ import {
   Settings, 
   Activity, 
   ExternalLink,
-  Shield,
   FileText,
   LogOut,
   type LucideIcon
@@ -80,7 +79,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ onCloseMobile }) => 
         { label: 'Team & Users', to: '/admin/users', icon: Users, permission: 'users.manage' },
         { label: 'Activity Audit', to: '/admin/activity', icon: Activity, permission: 'activity.view' },
         { label: 'Settings', to: '/admin/settings', icon: Settings, permission: 'settings.manage' },
-        { label: 'Security States', to: '/admin/security-states', icon: Shield, permission: null },
       ]
     }
   ];

@@ -25,6 +25,9 @@ export interface FirestoreUser {
   role: UserRole;
   status: UserStatus;
   phone?: string;
+  avatarUrl?: string;
+  twoFactorEnabled?: boolean;
+  settings?: Record<string, unknown>;
   createdAt: Timestamp;
   updatedAt: Timestamp;
   lastLoginAt?: Timestamp;

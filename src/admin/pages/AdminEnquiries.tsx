@@ -10,6 +10,7 @@ import {
 import { useAdminStore, type AdminEnquiry } from '../data/adminStore';
 import { AdminBreadcrumbs, StatusBadge } from '../components/AdminUI';
 import { useAuth } from '../context/AuthContext';
+import { formatDateTime } from '../../utils/dateUtils';
 
 export const AdminEnquiries: React.FC = () => {
   const { enquiries, updateEnquiryStatus, addEnquiryNote } = useAdminStore();
@@ -188,7 +189,7 @@ export const AdminEnquiries: React.FC = () => {
 
                     {/* Date */}
                     <td className="py-3.5 px-4 text-slate-400 font-medium">
-                      {enq.date}
+                      {formatDateTime(enq.date)}
                     </td>
 
                     {/* Status */}
@@ -244,7 +245,7 @@ export const AdminEnquiries: React.FC = () => {
                 </div>
                 <h3 className="text-2xl font-extrabold text-white mt-1">{selectedEnquiry.customerName}</h3>
                 <div className="text-xs text-slate-400 mt-1 flex items-center gap-3">
-                  <span>Received: <strong className="text-slate-200">{selectedEnquiry.date}</strong></span>
+                  <span>Received: <strong className="text-slate-200">{formatDateTime(selectedEnquiry.date)}</strong></span>
                   <span>•</span>
                   <span>Source: <strong className="text-volt">{selectedEnquiry.source}</strong></span>
                 </div>

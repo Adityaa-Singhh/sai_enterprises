@@ -42,6 +42,8 @@ export const AdminProductEdit: React.FC = () => {
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'specs' | 'media' | 'settings'>('basic');
 
+  const DRAFT_KEY = 'saienterprises_draft_new_product';
+
   useEffect(() => {
     if (isEditMode && existingProduct) {
       setName(existingProduct.name);
@@ -62,11 +64,43 @@ export const AdminProductEdit: React.FC = () => {
         })));
       }
     } else if (!isEditMode) {
-      // Default presets
-      if (categories[0]) setCategory(categories[0].name);
-      if (brands[0]) setBrand(brands[0].name);
+      // Check for saved draft
+      try {
+        const savedDraft = localStorage.getItem(DRAFT_KEY);
+        if (savedDraft) {
+          const draft = JSON.parse(savedDraft);
+          if (draft.name) setName(draft.name);
+          if (draft.slug) setSlug(draft.slug);
+          if (draft.brand) setBrand(draft.brand);
+          if (draft.category) setCategory(draft.category);
+          if (draft.description) setDescription(draft.description);
+          if (draft.shortDescription) setShortDescription(draft.shortDescription);
+          if (draft.imageUrl) setImageUrl(draft.imageUrl);
+          if (draft.inStock !== undefined) setInStock(draft.inStock);
+          if (draft.isFeatured !== undefined) setIsFeatured(draft.isFeatured);
+          if (draft.isNew !== undefined) setIsNew(draft.isNew);
+          if (draft.specs && draft.specs.length > 0) setSpecs(draft.specs);
+        } else {
+          if (categories[0]) setCategory(categories[0].name);
+          if (brands[0]) setBrand(brands[0].name);
+        }
+      } catch {
+        if (categories[0]) setCategory(categories[0].name);
+        if (brands[0]) setBrand(brands[0].name);
+      }
     }
   }, [id, existingProduct, isEditMode, categories, brands]);
+
+  // Auto-save draft when fields change in new mode
+  useEffect(() => {
+    if (!isEditMode && !savedSuccess) {
+      if (name.trim() || description.trim() || shortDescription.trim()) {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({
+          name, slug, brand, category, description, shortDescription, imageUrl, inStock, isFeatured, isNew, specs
+        }));
+      }
+    }
+  }, [isEditMode, savedSuccess, name, slug, brand, category, description, shortDescription, imageUrl, inStock, isFeatured, isNew, specs]);
 
   // Auto-generate slug when name changes in new mode
   const handleNameChange = (val: string) => {
@@ -119,6 +153,7 @@ export const AdminProductEdit: React.FC = () => {
       updateProduct(id, productPayload);
     } else {
       addProduct(productPayload);
+      localStorage.removeItem(DRAFT_KEY);
     }
 
     setSavedSuccess(true);
