@@ -14,6 +14,7 @@ import {
   where,
   orderBy,
   limit,
+  startAfter,
   serverTimestamp,
   type DocumentData,
 } from 'firebase/firestore';
@@ -26,15 +27,50 @@ function docToProduct(id: string, data: DocumentData): FirestoreProduct {
 
 // ── Public ───────────────────────────────────────────────────────────────────
 
-/** Get all published products for public site */
-export async function getPublishedProducts(): Promise<FirestoreProduct[]> {
-  const q = query(
+/** Get paginated published products for public site */
+export async function getPublishedProductsPaginated(
+  lastDoc: any = null,
+  categorySlug: string = '',
+  searchPrefix: string = '',
+  limitCount: number = 24
+): Promise<{ products: FirestoreProduct[]; lastDoc: any; hasMore: boolean }> {
+  let q = query(
     collection(db, COLLECTIONS.PRODUCTS),
-    where('published', '==', true),
-    orderBy('createdAt', 'desc')
+    where('published', '==', true)
   );
+
+  if (categorySlug) {
+    q = query(q, where('categorySlug', '==', categorySlug));
+  }
+
+  if (searchPrefix) {
+    // Basic prefix search based on 'name'. 
+    // \uf8ff is a very high code point in the Unicode range.
+    q = query(
+      q,
+      where('name', '>=', searchPrefix),
+      where('name', '<=', searchPrefix + '\uf8ff')
+    );
+  } else {
+    // Only apply orderBy if not doing inequality on name (Firestore restriction: 
+    // first orderBy must be on the same field as the inequality filter).
+    // We will just skip ordering if searchPrefix is used for simplicity.
+    q = query(q, orderBy('createdAt', 'desc'));
+  }
+
+  if (lastDoc) {
+    q = query(q, startAfter(lastDoc));
+  }
+
+  q = query(q, limit(limitCount));
+
   const snap = await getDocs(q);
-  return snap.docs.map((d) => docToProduct(d.id, d.data()));
+  
+  return {
+    products: snap.docs.map((d) => docToProduct(d.id, d.data())),
+    lastDoc: snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null,
+    hasMore: snap.docs.length === limitCount
+  };
 }
 
 /** Get featured products for homepage */

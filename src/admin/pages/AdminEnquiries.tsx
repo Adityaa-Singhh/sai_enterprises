@@ -13,7 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import { formatDateTime } from '../../utils/dateUtils';
 
 export const AdminEnquiries: React.FC = () => {
-  const { enquiries, updateEnquiryStatus, addEnquiryNote } = useAdminStore();
+  const { enquiries, updateEnquiryStatus, addEnquiryNote, hasMoreEnquiries, loadMoreEnquiries } = useAdminStore();
   const { userProfile } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -230,6 +230,17 @@ export const AdminEnquiries: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {hasMoreEnquiries && (
+          <div className="p-4 border-t border-white/5 flex justify-center">
+            <button
+              onClick={loadMoreEnquiries}
+              className="px-5 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-slate-300 hover:text-white transition-all cursor-pointer shadow-md"
+            >
+              Load Older Enquiries
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Enquiry Detail Modal / Drawer */}

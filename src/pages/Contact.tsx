@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Phone, MessageCircle, Mail, MapPin, Clock, Send, Check, ArrowRight } from 'lucide-react';
 import { Section, SectionHeader, useScrollReveal } from '../components/ui';
 import { getWhatsAppUrl, getPhoneUrl } from '../data';
-import { useAdminStore } from '../admin/data/adminStore';
+import { usePublicStore } from '../data/publicStore';
 import { submitEnquiry } from '../services/enquiryService';
-import { formatDateTime } from '../utils/dateUtils';
+import { trackEnquirySubmission, trackWhatsAppClick, trackPhoneCallClick } from '../services/analyticsService';
 
 interface ContactProps {
   onQuote: () => void;
@@ -12,7 +12,7 @@ interface ContactProps {
 
 export default function Contact({ onQuote }: ContactProps) {
   const DRAFT_KEY = 'saienterprises_draft_contact';
-  const { addEnquiry, businessInfo } = useAdminStore();
+  const { businessInfo } = usePublicStore();
 
   const [formState, setFormState] = useState(() => {
     try {
@@ -46,17 +46,7 @@ export default function Contact({ onQuote }: ContactProps) {
       ? `${formState.message}${formState.quantity ? ' | Qty: ' + formState.quantity : ''}`
       : (formState.quantity ? `Qty: ${formState.quantity}` : 'General Inquiry');
 
-    // 1. Save to local admin store for instant response
-    addEnquiry({
-      customerName: formState.name,
-      phone: formState.phone,
-      productRequirement: formState.requirement,
-      message: messageText,
-      date: formatDateTime(new Date()),
-      timestamp: Date.now(),
-      source: 'Contact Form',
-      priority: 'HIGH',
-    });
+
 
     // 2. Persist to Firestore cloud database
     try {
@@ -66,6 +56,11 @@ export default function Contact({ onQuote }: ContactProps) {
         productRequirement: formState.requirement,
         message: messageText,
         source: 'Contact Form',
+      });
+      trackEnquirySubmission({
+        source: 'contact_page',
+        name: formState.name,
+        productName: formState.requirement,
       });
     } catch (err) {
       console.warn('[Contact] Firestore enquiry submission queued locally:', err);
@@ -94,7 +89,11 @@ export default function Contact({ onQuote }: ContactProps) {
           {/* Left Column: Info & Map */}
           <div className="space-y-8 animate-stagger">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <a href={getPhoneUrl()} className="glass-card p-6 rounded-3xl border border-white/10 flex flex-col items-center text-center hover:border-volt/50 transition-colors group">
+              <a
+                href={getPhoneUrl()}
+                onClick={() => trackPhoneCallClick('contact_page_card')}
+                className="glass-card p-6 rounded-3xl border border-white/10 flex flex-col items-center text-center hover:border-volt/50 transition-colors group"
+              >
                 <div className="w-12 h-12 rounded-2xl bg-dark-2 border border-white/10 flex items-center justify-center mb-4 group-hover:bg-volt/10 transition-colors">
                   <Phone className="w-6 h-6 text-volt" />
                 </div>
@@ -104,6 +103,7 @@ export default function Contact({ onQuote }: ContactProps) {
               
               <a 
                 href={getWhatsAppUrl("Hi, I would like to get in touch")} 
+                onClick={() => trackWhatsAppClick('contact_page_card')}
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="glass-card p-6 rounded-3xl border border-white/10 flex flex-col items-center text-center hover:border-green-500/50 transition-colors group"

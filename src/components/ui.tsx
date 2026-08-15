@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState, forwardRef, type ReactNode, type Ref } from 'react';
-
-import { useAdminStore } from '../admin/data/adminStore';
 import { submitEnquiry } from '../services/enquiryService';
-import { formatDateTime } from '../utils/dateUtils';
+import { trackEnquirySubmission } from '../services/analyticsService';
 
 // ===== Scroll Reveal Hook =====
 export function useScrollReveal<T extends HTMLElement>() {
@@ -108,11 +106,35 @@ export function ProductImage({
   size?: 'sm' | 'md' | 'lg';
 }) {
   const [error, setError] = useState(false);
+  const [useOptimized, setUseOptimized] = useState(true);
 
   const sizeMap = {
     sm: 'h-32',
     md: 'h-48',
     lg: 'h-64',
+  };
+
+  const getOptimizedUrl = (url: string) => {
+    if (!url || !url.includes('firebasestorage.googleapis.com')) return url;
+    try {
+      const urlObj = new URL(url);
+      const path = urlObj.pathname;
+      const lastDotIndex = path.lastIndexOf('.');
+      if (lastDotIndex === -1) return url;
+      
+      const dimensionMap = {
+        sm: '400x400',
+        md: '800x800',
+        lg: '1200x1200'
+      };
+      
+      const suffix = `_${dimensionMap[size]}`;
+      const optimizedPath = path.substring(0, lastDotIndex) + suffix + path.substring(lastDotIndex);
+      urlObj.pathname = optimizedPath;
+      return urlObj.toString();
+    } catch (e) {
+      return url;
+    }
   };
 
   if (error || !src) {
@@ -142,13 +164,22 @@ export function ProductImage({
     );
   }
 
+  const currentSrc = useOptimized ? getOptimizedUrl(src) : src;
+
   return (
     <img
-      src={src}
+      src={currentSrc}
       alt={alt}
       className={`${sizeMap[size]} w-full object-cover ${className}`}
-      onError={() => setError(true)}
+      onError={() => {
+        if (useOptimized) {
+          setUseOptimized(false);
+        } else {
+          setError(true);
+        }
+      }}
       loading="lazy"
+      decoding="async"
     />
   );
 }
@@ -304,7 +335,7 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
     }
   }, [formData, submitted]);
 
-  const { addEnquiry } = useAdminStore();
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -313,16 +344,7 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
       ? `${formData.message}${formData.quantity ? ' | Qty: ' + formData.quantity : ''}`
       : (formData.quantity ? `Qty: ${formData.quantity}` : 'No notes');
 
-    addEnquiry({
-      customerName: formData.name,
-      phone: formData.phone,
-      productRequirement: formData.product,
-      message: messageText,
-      date: formatDateTime(new Date()),
-      timestamp: Date.now(),
-      source: 'Web Quote',
-      priority: 'MEDIUM',
-    });
+
 
     try {
       await submitEnquiry({
@@ -331,6 +353,11 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
         productRequirement: formData.product,
         message: messageText,
         source: 'Web Quote',
+      });
+      trackEnquirySubmission({
+        source: 'quote_modal',
+        name: formData.name,
+        productName: formData.product,
       });
     } catch (err) {
       console.warn('[QuoteModal] Firestore enquiry submission queued locally:', err);

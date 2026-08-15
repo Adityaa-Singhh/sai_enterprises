@@ -1,6 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import * as Icons from 'lucide-react';
+import {
+  ToggleRight,
+  Plug,
+  Cable,
+  Unplug,
+  Lightbulb,
+  ShieldCheck,
+  Fan,
+  Wrench,
+  Factory,
+  Layers,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Zap,
+  MessageCircle,
+  Cpu,
+  CheckCircle2,
+  Eye,
+  Sun,
+  Wind,
+  Box,
+  ToggleLeft,
+  Building2,
+  Award,
+  Quote,
+  MapPin,
+  Clock,
+  Phone,
+  Navigation,
+  FileText,
+  PhoneCall,
+  HelpCircle,
+  Package,
+  Users,
+  IndianRupee,
+  MessageSquare
+} from 'lucide-react';
 import { motion } from 'framer-motion';
 import { 
   Section, 
@@ -19,7 +56,65 @@ import {
   getPhoneUrl,
   getProductEnquiryUrl
 } from '../data';
-import { useAdminStore } from '../admin/data/adminStore';
+import { usePublicStore } from '../data/publicStore';
+import { 
+  trackProductClick, 
+  trackWhatsAppClick 
+} from '../services/analyticsService';
+
+const Icons = {
+  Layers,
+  ArrowRight,
+  Zap,
+  MessageCircle,
+  Cpu,
+  CheckCircle2,
+  Eye,
+  ShieldCheck,
+  Sun,
+  Wind,
+  Box,
+  ToggleLeft,
+  Building2,
+  Award,
+  Quote,
+  MapPin,
+  Clock,
+  Phone,
+  Navigation,
+  FileText,
+  PhoneCall,
+  HelpCircle,
+  ToggleRight,
+  Plug,
+  Cable,
+  Unplug,
+  Lightbulb,
+  Fan,
+  Wrench,
+  Factory,
+  Package,
+  Users,
+  IndianRupee,
+  MessageSquare
+};
+
+const CAT_ICONS: Record<string, any> = {
+  ToggleRight,
+  Plug,
+  Cable,
+  Unplug,
+  Lightbulb,
+  ShieldCheck,
+  Fan,
+  Wrench,
+  Factory,
+  Award,
+  Package,
+  Users,
+  IndianRupee,
+  MessageSquare
+};
 
 interface HomeProps {
   onQuote: () => void;
@@ -27,13 +122,12 @@ interface HomeProps {
 
 // Map string icon names to actual Lucide components dynamically
 const IconComponent = ({ name, className }: { name: string, className?: string }) => {
-  const Icon = (Icons as any)[name] || Icons.HelpCircle;
+  const Icon = CAT_ICONS[name] || HelpCircle;
   return <Icon className={className} />;
 };
 
 export default function Home({ onQuote }: HomeProps) {
-  const { products, categories, brands, testimonials, gallery: galleryImages, businessInfo } = useAdminStore();
-  const featuredProducts = products.filter(p => p.isFeatured).slice(0, 4); // Show top 4
+  const { featuredProducts, categories, brands, testimonials, gallery: galleryImages, businessInfo } = usePublicStore();
   const featuredTestimonials = testimonials.slice(0, 3);
   const featuredGallery = galleryImages.slice(0, 4); // Or 6
 
@@ -43,6 +137,51 @@ export default function Home({ onQuote }: HomeProps) {
   const [loadKw, setLoadKw] = useState<number>(6);
   const [phase, setPhase] = useState<'single' | 'three'>('single');
   const [activeCategoryTab, setActiveCategoryTab] = useState<'switches' | 'wires' | 'mcb' | 'lighting'>('switches');
+
+  // Featured Products Sliding Window Carousel State
+  const [productIndex, setProductIndex] = useState(0);
+  const [itemsPerView, setItemsPerView] = useState(4);
+  const [isCarouselPaused, setIsCarouselPaused] = useState(false);
+
+  useEffect(() => {
+    const updateItemsPerView = () => {
+      if (typeof window === 'undefined') return;
+      if (window.innerWidth < 640) setItemsPerView(1);
+      else if (window.innerWidth < 1024) setItemsPerView(2);
+      else setItemsPerView(4);
+    };
+    updateItemsPerView();
+    window.addEventListener('resize', updateItemsPerView);
+    return () => window.removeEventListener('resize', updateItemsPerView);
+  }, []);
+
+  const maxProductIndex = Math.max(0, featuredProducts.length - itemsPerView);
+
+  const nextProductSlide = () => {
+    setProductIndex((prev) => (prev >= maxProductIndex ? 0 : prev + 1));
+  };
+
+  const prevProductSlide = () => {
+    setProductIndex((prev) => (prev <= 0 ? maxProductIndex : prev - 1));
+  };
+
+  // Auto sliding window animation with pause on hover
+  useEffect(() => {
+    if (featuredProducts.length <= itemsPerView || isCarouselPaused) return;
+    const timer = setInterval(() => {
+      setProductIndex((prev) => (prev >= maxProductIndex ? 0 : prev + 1));
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [featuredProducts.length, itemsPerView, maxProductIndex, isCarouselPaused]);
+
+  // Handle Drag / Swipe on Touch & Mouse
+  const handleDragEnd = (_: any, info: any) => {
+    if (info.offset.x < -45) {
+      nextProductSlide();
+    } else if (info.offset.x > 45) {
+      prevProductSlide();
+    }
+  };
 
   // Dynamic calculations
   const voltage = phase === 'single' ? 230 : 415;
@@ -321,55 +460,131 @@ export default function Home({ onQuote }: HomeProps) {
         </div>
       </Section>
 
-      {/* 3. FEATURED PRODUCTS */}
-      <Section id="featured-products">
-        <SectionHeader 
-          label="Featured" 
-          title="Top Selling Products" 
-          subtitle="Our most requested and highly rated electrical components and equipment."
-        />
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
-          {featuredProducts.map((product) => (
-            <SpotlightCard key={product.id} className="flex flex-col h-full overflow-hidden group">
-              <Link to={`/products/${product.slug}`} className="block relative aspect-square overflow-hidden bg-dark-2">
-                <ProductImage 
-                  src={product.images[0]} 
-                  alt={product.name} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                />
-                <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
-                  {product.isNew && <Badge variant="volt">NEW</Badge>}
-                  {!product.inStock && <Badge variant="amber">OUT OF STOCK</Badge>}
-                </div>
-              </Link>
-              
-              <div className="p-6 flex flex-col flex-grow">
-                <div className="text-xs text-volt font-bold tracking-wider mb-2 uppercase">{product.brand}</div>
-                <Link to={`/products/${product.slug}`} className="hover:text-volt transition-colors">
-                  <h3 className="text-lg font-bold text-white mb-2 line-clamp-2">{product.name}</h3>
-                </Link>
-                <p className="text-sm text-slate-300 mb-6 line-clamp-2 font-normal leading-relaxed">{product.shortDescription}</p>
-                
-                <div className="mt-auto flex flex-col gap-3">
-                  <Link to={`/products/${product.slug}`} className="btn-secondary w-full py-2.5 rounded-full text-sm font-semibold flex justify-center items-center gap-2">
-                    <Icons.Eye className="w-4 h-4 text-volt" /> View Details
-                  </Link>
-                  <a 
-                    href={getProductEnquiryUrl(product.name)} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="btn-whatsapp w-full py-2.5 rounded-full text-sm font-semibold flex justify-center items-center gap-2"
-                  >
-                    <Icons.MessageCircle className="w-4 h-4" /> Enquire Now
-                  </a>
-                </div>
+      {/* 3. FEATURED PRODUCTS (SLIDING WINDOW CAROUSEL) */}
+      <Section id="featured-products" className="relative">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+          <SectionHeader 
+            label="Featured" 
+            title="Top Selling Products" 
+            subtitle="Our most requested and highly rated electrical components and equipment."
+            className="mb-0"
+          />
+          
+          {/* Carousel Controls (Shown if more products than visible window) */}
+          {featuredProducts.length > itemsPerView && (
+            <div className="flex items-center gap-3 self-start md:self-end">
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-slate-300">
+                <span className="w-2 h-2 rounded-full bg-volt animate-pulse" />
+                <span>{productIndex + 1} of {maxProductIndex + 1}</span>
               </div>
-            </SpotlightCard>
-          ))}
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={prevProductSlide}
+                  aria-label="Previous Products"
+                  className="w-10 h-10 rounded-full bg-dark-2 border border-white/10 flex items-center justify-center text-slate-300 hover:text-volt hover:border-volt/40 hover:bg-white/5 active:scale-95 transition-all shadow-md"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={nextProductSlide}
+                  aria-label="Next Products"
+                  className="w-10 h-10 rounded-full bg-dark-2 border border-white/10 flex items-center justify-center text-slate-300 hover:text-volt hover:border-volt/40 hover:bg-white/5 active:scale-95 transition-all shadow-md"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         
-        <div className="flex justify-center mt-12">
+        {/* Sliding Window Viewport */}
+        <div 
+          className="relative overflow-hidden w-full -mx-3 px-3 py-2"
+          onMouseEnter={() => setIsCarouselPaused(true)}
+          onMouseLeave={() => setIsCarouselPaused(false)}
+        >
+          <motion.div
+            className="flex cursor-grab active:cursor-grabbing select-none"
+            animate={{ x: `-${productIndex * (100 / itemsPerView)}%` }}
+            transition={{ type: 'spring', stiffness: 240, damping: 28, mass: 0.85 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.15}
+            onDragEnd={handleDragEnd}
+          >
+            {featuredProducts.map((product) => (
+              <div
+                key={product.id}
+                style={{ width: `${100 / itemsPerView}%` }}
+                className="shrink-0 px-3 flex flex-col h-full"
+              >
+                <SpotlightCard className="h-full overflow-hidden group hover:border-volt/40 transition-all duration-300 shadow-xl">
+                  <div className="flex flex-col h-full w-full">
+                    <Link to={`/products/${product.slug}`} className="block relative aspect-square overflow-hidden bg-dark-2">
+                      <ProductImage 
+                        src={product.images[0]} 
+                        alt={product.name} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      />
+                      <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
+                        {product.isNew && <Badge variant="volt">NEW</Badge>}
+                        {!product.inStock && <Badge variant="amber">OUT OF STOCK</Badge>}
+                      </div>
+                    </Link>
+                    
+                    <div className="p-6 flex flex-col flex-grow">
+                      <div className="text-xs text-volt font-bold tracking-wider mb-2 uppercase">{product.brand}</div>
+                      <Link to={`/products/${product.slug}`} className="hover:text-volt transition-colors">
+                        <h3 className="text-lg font-bold text-white mb-2 line-clamp-2">{product.name}</h3>
+                      </Link>
+                      <p className="text-sm text-slate-300 mb-6 line-clamp-2 font-normal leading-relaxed">{product.shortDescription}</p>
+                      
+                      <div className="mt-auto flex flex-col gap-3">
+                        <Link
+                          to={`/products/${product.slug}`}
+                          onClick={() => trackProductClick({ id: product.id, name: product.name, category: product.category, brand: product.brand }, 'home_carousel')}
+                          className="btn-secondary w-full py-2.5 rounded-full text-sm font-semibold flex justify-center items-center gap-2"
+                        >
+                          <Icons.Eye className="w-4 h-4 text-volt" /> View Details
+                        </Link>
+                        <a 
+                          href={getProductEnquiryUrl(product.name)} 
+                          onClick={() => trackWhatsAppClick('home_carousel_enquire', { productName: product.name })}
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="btn-whatsapp w-full py-2.5 rounded-full text-sm font-semibold flex justify-center items-center gap-2"
+                        >
+                          <Icons.MessageCircle className="w-4 h-4" /> Enquire Now
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </SpotlightCard>
+              </div>
+            ))}
+          </motion.div>
+        </div>
+
+        {/* Dynamic Expanding Pill Pagination Indicators */}
+        {featuredProducts.length > itemsPerView && (
+          <div className="flex items-center justify-center gap-2 mt-8">
+            {Array.from({ length: maxProductIndex + 1 }).map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setProductIndex(idx)}
+                aria-label={`Go to slide ${idx + 1}`}
+                className={`h-2.5 rounded-full transition-all duration-500 ${
+                  idx === productIndex 
+                    ? 'w-8 bg-gradient-to-r from-volt via-cyan-400 to-blue-500 shadow-[0_0_15px_rgba(0,229,255,0.8)]' 
+                    : 'w-2.5 bg-white/20 hover:bg-white/40'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+        
+        <div className="flex justify-center mt-10">
           <Link to="/products" className="btn-secondary py-3.5 px-8 rounded-full flex items-center gap-2 group font-semibold text-white hover:border-volt/50">
             View All Products
             <Icons.ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform text-volt" />

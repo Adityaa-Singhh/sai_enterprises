@@ -45,7 +45,7 @@ export const AdminDashboard: React.FC = () => {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-volt/10 border border-volt/30 text-volt text-xs font-bold uppercase tracking-wider mb-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              Live Store Console • Gurugram Sector 15
+              Live Store Console • Rourkela
             </div>
             <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
               Welcome back, <span className="text-volt">{userProfile?.displayName || 'Administrator'}</span>

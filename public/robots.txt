@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
-Sitemap: https://voltedge.in/sitemap.xml
+Disallow: /admin
+Sitemap: https://saienterprises.in/sitemap.xml

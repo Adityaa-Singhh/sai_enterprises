@@ -1,11 +1,45 @@
-import { useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { formatDateTime } from '../../utils/dateUtils';
 import { 
-  collection, doc, updateDoc, onSnapshot, query, orderBy, serverTimestamp 
+  collection, doc, onSnapshot, query, orderBy, limit, startAfter, getDocs,
+  DocumentSnapshot, setDoc, serverTimestamp, writeBatch
 } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { COLLECTIONS } from '../../lib/firestore-types';
-import { updateEnquiryStatus as updateEnquiryStatusInFirestore } from '../../services/enquiryService';
+import { useAuth } from '../context/AuthContext';
+import {
+  createProduct as createProductService,
+  updateProduct as updateProductService,
+  deleteProduct as deleteProductService
+} from '../../services/productService';
+import {
+  createCategory as createCategoryService,
+  updateCategory as updateCategoryService,
+  deleteCategory as deleteCategoryService
+} from '../../services/categoryService';
+import {
+  createBrand as createBrandService,
+  updateBrand as updateBrandService,
+  deleteBrand as deleteBrandService
+} from '../../services/brandService';
+import {
+  createFAQ as createFAQService,
+  updateFAQ as updateFAQService,
+  deleteFAQ as deleteFAQService
+} from '../../services/faqService';
+import {
+  createGalleryImage as createGalleryImageService,
+  deleteGalleryImage as deleteGalleryImageService
+} from '../../services/galleryService';
+
+import {
+  updateBusinessInfo as updateBusinessInfoService,
+  subscribeToBusinessInfo
+} from '../../services/businessService';
+import {
+  updateEnquiryStatus as updateEnquiryStatusInFirestore,
+  addEnquiryNote as addEnquiryNoteInFirestore
+} from '../../services/enquiryService';
 import { 
   products as initialProducts, 
   categories as initialCategories, 
@@ -59,91 +93,6 @@ export interface HomepageContent {
   guaranteeSubtitle: string;
 }
 
-// Initial Realistic Enquiries
-const INITIAL_ENQUIRIES: AdminEnquiry[] = [
-  {
-    id: 'enq-101',
-    customerName: 'Rajesh Sharma (Contractor)',
-    phone: '+91 98112 34567',
-    email: 'rajesh.electricals@gmail.com',
-    productRequirement: 'PMCona Modular Switches & Gang Boxes for 4 BHK Villa',
-    message: 'Need quotation for 120 modular switches, 45 sockets (16A), 8 fan regulators, and MCB distribution board for a residential project in DLF Phase 2.',
-    date: 'Today, 10:30 AM',
-    timestamp: Date.now() - 1000 * 60 * 180,
-    source: 'WhatsApp',
-    status: 'NEW',
-    priority: 'HIGH',
-    internalNotes: [
-      { id: 'note-1', author: 'Suresh Sharma', note: 'Sent preliminary catalogue via WhatsApp. Waiting for project drawing sheet.', date: 'Today, 11:00 AM' }
-    ]
-  },
-  {
-    id: 'enq-102',
-    customerName: 'Anil Agarwal',
-    phone: '+91 98710 98765',
-    email: 'anil.agarwal@outlook.com',
-    productRequirement: 'Polycab 2.5 sq mm House Wire (10 Coils)',
-    message: 'Please confirm availability of Polycab Optima Plus 2.5 sq mm red and black coils with GST bill.',
-    date: 'Today, 09:15 AM',
-    timestamp: Date.now() - 1000 * 60 * 270,
-    source: 'Web Quote',
-    status: 'CONTACTED',
-    priority: 'MEDIUM',
-    internalNotes: [
-      { id: 'note-2', author: 'Vikram Mehta', note: 'Stock confirmed in warehouse. Quoted ₹1,850 per coil incl GST.', date: 'Today, 09:45 AM' }
-    ]
-  },
-  {
-    id: 'enq-103',
-    customerName: 'Deepak Verma (Architect)',
-    phone: '+91 99991 22334',
-    email: 'deepak@vermaarchitects.com',
-    productRequirement: 'Architectural LED Panel Lights & Strip Lights',
-    message: 'Looking for 36W warm-white slim panel lights (60 units) and waterproof outdoor cob lights for commercial showroom.',
-    date: 'Yesterday, 04:20 PM',
-    timestamp: Date.now() - 1000 * 60 * 1440,
-    source: 'WhatsApp',
-    status: 'IN_PROGRESS',
-    priority: 'HIGH',
-    internalNotes: [
-      { id: 'note-3', author: 'Suresh Sharma', note: 'Sample light delivered to his office. He requested final discount for bulk purchase.', date: 'Yesterday, 06:00 PM' }
-    ]
-  },
-  {
-    id: 'enq-104',
-    customerName: 'Sanjay Gupta',
-    phone: '+91 98100 55443',
-    email: 'sanjay.gupta@yahoo.in',
-    productRequirement: 'Schneider 63A 4-Pole MCB & RCCB',
-    message: 'Need industrial grade 63A four pole isolator and 100mA RCCB. Immediate pickup today.',
-    date: 'Yesterday, 01:10 PM',
-    timestamp: Date.now() - 1000 * 60 * 1600,
-    source: 'Direct Call',
-    status: 'RESOLVED',
-    priority: 'MEDIUM',
-    internalNotes: [
-      { id: 'note-4', author: 'Anjali Verma', note: 'Customer picked up from store. Bill #SE-4821 generated.', date: 'Yesterday, 02:30 PM' }
-    ]
-  },
-  {
-    id: 'enq-105',
-    customerName: 'Pooja Malhotra',
-    phone: '+91 97118 77665',
-    email: 'pooja.m@gmail.com',
-    productRequirement: 'Crompton BLDC Ceiling Fans (5 Units)',
-    message: 'Need 5 units of Crompton Energion 1200mm fans in Brown finish with remote control.',
-    date: '2 Days ago',
-    timestamp: Date.now() - 1000 * 60 * 2880,
-    source: 'Store Visit',
-    status: 'CLOSED',
-    priority: 'LOW',
-    internalNotes: [
-      { id: 'note-5', author: 'Vikram Mehta', note: 'Delivered and installed. Customer gave 5-star rating.', date: '2 Days ago' }
-    ]
-  }
-];
-
-// Initial Activity Logs
 const INITIAL_ACTIVITIES: AdminActivityItem[] = [
   {
     id: 'act-1',
@@ -153,46 +102,6 @@ const INITIAL_ACTIVITIES: AdminActivityItem[] = [
     resource: 'PMCona 6A One Way Switch',
     timestamp: '15 mins ago',
     details: 'Changed inventory status to IN_STOCK (qty 240 units)',
-    status: 'SUCCESS'
-  },
-  {
-    id: 'act-2',
-    userName: 'Vikram Mehta',
-    userRole: 'MANAGER',
-    action: 'Status Change',
-    resource: 'Enquiry #enq-102 (Anil Agarwal)',
-    timestamp: '1 hour ago',
-    details: 'Status updated from NEW to CONTACTED',
-    status: 'INFO'
-  },
-  {
-    id: 'act-3',
-    userName: 'Suresh Sharma',
-    userRole: 'OWNER',
-    action: 'Updated Business Info',
-    resource: 'Store Hours & WhatsApp',
-    timestamp: '3 hours ago',
-    details: 'Verified phone numbers and weekday timings',
-    status: 'SUCCESS'
-  },
-  {
-    id: 'act-4',
-    userName: 'Anjali Verma',
-    userRole: 'STAFF',
-    action: 'Resolved Enquiry',
-    resource: 'Enquiry #enq-104 (Sanjay Gupta)',
-    timestamp: 'Yesterday',
-    details: 'Marked as RESOLVED after counter purchase',
-    status: 'SUCCESS'
-  },
-  {
-    id: 'act-5',
-    userName: 'Suresh Sharma',
-    userRole: 'OWNER',
-    action: 'Added New Category',
-    resource: 'Industrial Electricals',
-    timestamp: '2 days ago',
-    details: 'Created category slug industrial-electricals',
     status: 'SUCCESS'
   }
 ];
@@ -209,137 +118,81 @@ const INITIAL_HOMEPAGE_CONTENT: HomepageContent = {
   guaranteeSubtitle: 'What sets us apart as your preferred regional electrical products supplier.'
 };
 
-// Storage Keys
-const KEY_PRODUCTS = 'saienterprises_admin_products';
-const KEY_CATEGORIES = 'saienterprises_admin_categories';
-const KEY_BRANDS = 'saienterprises_admin_brands';
-const KEY_GALLERY = 'saienterprises_admin_gallery';
-const KEY_TESTIMONIALS = 'saienterprises_admin_testimonials';
-const KEY_FAQS = 'saienterprises_admin_faqs';
-const KEY_ENQUIRIES = 'saienterprises_admin_enquiries';
-const KEY_BUSINESS = 'saienterprises_admin_business';
-const KEY_CONTENT = 'saienterprises_admin_content';
 const KEY_ACTIVITIES = 'saienterprises_admin_activities';
 
-export function useAdminStore() {
-  // Products
-  const [products, setProducts] = useState<Product[]>(() => {
-    const saved = localStorage.getItem(KEY_PRODUCTS);
-    return saved ? JSON.parse(saved) : initialProducts;
-  });
+interface AdminStoreContextType {
+  products: Product[];
+  categories: Category[];
+  brands: Brand[];
+  gallery: GalleryImage[];
+  testimonials: any[];
+  faqs: FAQ[];
+  enquiries: AdminEnquiry[];
+  businessInfo: typeof initialBusinessInfo;
+  homepageContent: HomepageContent;
+  activities: AdminActivityItem[];
+  hasMoreEnquiries: boolean;
+  
+  // Actions
+  addProduct: (prod: Omit<Product, 'id'>) => Promise<Product>;
+  updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
+  deleteProduct: (id: string) => Promise<void>;
+  toggleProductStock: (id: string) => Promise<void>;
+  toggleProductFeatured: (id: string) => Promise<void>;
+  addCategory: (cat: Omit<Category, 'id'>) => Promise<Category>;
+  updateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
+  addBrand: (brand: Omit<Brand, 'id'>) => Promise<Brand>;
+  updateBrand: (id: string, updates: Partial<Brand>) => Promise<void>;
+  deleteBrand: (id: string) => Promise<void>;
+  updateEnquiryStatus: (id: string, status: AdminEnquiry['status']) => Promise<void>;
+  addEnquiryNote: (enquiryId: string, author: string, noteText: string) => Promise<void>;
+  addGalleryImage: (img: Omit<GalleryImage, 'id'>) => Promise<GalleryImage>;
+  deleteGalleryImage: (id: string) => Promise<void>;
+  addFaq: (faq: Omit<FAQ, 'id'>) => Promise<FAQ>;
+  updateFaq: (id: string, updates: Partial<FAQ>) => Promise<void>;
+  deleteFaq: (id: string) => Promise<void>;
+  updateBusinessInformation: (info: Partial<typeof initialBusinessInfo>) => Promise<void>;
+  updateHomepageContent: (content: Partial<HomepageContent>) => Promise<void>;
+  loadMoreEnquiries: () => Promise<void>;
+  resetToFactoryDefaults: () => Promise<void>;
+  logActivity: (action: string, resource: string, details?: string, status?: 'SUCCESS' | 'WARNING' | 'INFO') => void;
+}
 
-  // Categories
-  const [categories, setCategories] = useState<Category[]>(() => {
-    const saved = localStorage.getItem(KEY_CATEGORIES);
-    return saved ? JSON.parse(saved) : initialCategories;
-  });
+const AdminStoreContext = createContext<AdminStoreContextType | undefined>(undefined);
 
-  // Brands
-  const [brands, setBrands] = useState<Brand[]>(() => {
-    const saved = localStorage.getItem(KEY_BRANDS);
-    return saved ? JSON.parse(saved) : initialBrands;
-  });
-
-  // Gallery
-  const [gallery, setGallery] = useState<GalleryImage[]>(() => {
-    const saved = localStorage.getItem(KEY_GALLERY);
-    return saved ? JSON.parse(saved) : initialGallery;
-  });
-
-  // Testimonials
-  const [testimonials, setTestimonials] = useState<any[]>(() => {
-    const saved = localStorage.getItem(KEY_TESTIMONIALS);
-    return saved ? JSON.parse(saved) : initialTestimonials;
-  });
-
-  // FAQs
-  const [faqs, setFaqs] = useState<FAQ[]>(() => {
-    const saved = localStorage.getItem(KEY_FAQS);
-    return saved ? JSON.parse(saved) : initialFaqs;
-  });
-
-  // Enquiries
-  const [enquiries, setEnquiries] = useState<AdminEnquiry[]>(() => {
-    const saved = localStorage.getItem(KEY_ENQUIRIES);
-    return saved ? JSON.parse(saved) : INITIAL_ENQUIRIES;
-  });
-
-  // Business Info
-  const [businessInfo, setBusinessInfo] = useState<typeof initialBusinessInfo>(() => {
-    const saved = localStorage.getItem(KEY_BUSINESS);
-    return saved ? JSON.parse(saved) : initialBusinessInfo;
-  });
-
-  // Homepage Content
-  const [homepageContent, setHomepageContent] = useState<HomepageContent>(() => {
-    const saved = localStorage.getItem(KEY_CONTENT);
-    return saved ? JSON.parse(saved) : INITIAL_HOMEPAGE_CONTENT;
-  });
-
-  // Activities
+export const AdminStoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { currentUser, userProfile } = useAuth();
+  
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [brands, setBrands] = useState<Brand[]>(initialBrands);
+  const [gallery, setGallery] = useState<GalleryImage[]>(initialGallery);
+  const [testimonials, setTestimonials] = useState<any[]>(initialTestimonials);
+  const [faqs, setFaqs] = useState<FAQ[]>(initialFaqs);
+  const [businessInfo, setBusinessInfo] = useState<typeof initialBusinessInfo>(initialBusinessInfo);
+  const [homepageContent, setHomepageContent] = useState<HomepageContent>(INITIAL_HOMEPAGE_CONTENT);
   const [activities, setActivities] = useState<AdminActivityItem[]>(() => {
     const saved = localStorage.getItem(KEY_ACTIVITIES);
     return saved ? JSON.parse(saved) : INITIAL_ACTIVITIES;
   });
 
-  // Save changes to LocalStorage
-  useEffect(() => { localStorage.setItem(KEY_PRODUCTS, JSON.stringify(products)); }, [products]);
-  useEffect(() => { localStorage.setItem(KEY_CATEGORIES, JSON.stringify(categories)); }, [categories]);
-  useEffect(() => { localStorage.setItem(KEY_BRANDS, JSON.stringify(brands)); }, [brands]);
-  useEffect(() => { localStorage.setItem(KEY_GALLERY, JSON.stringify(gallery)); }, [gallery]);
-  useEffect(() => { localStorage.setItem(KEY_TESTIMONIALS, JSON.stringify(testimonials)); }, [testimonials]);
-  useEffect(() => { localStorage.setItem(KEY_FAQS, JSON.stringify(faqs)); }, [faqs]);
-  useEffect(() => { localStorage.setItem(KEY_ENQUIRIES, JSON.stringify(enquiries)); }, [enquiries]);
-  useEffect(() => { localStorage.setItem(KEY_BUSINESS, JSON.stringify(businessInfo)); }, [businessInfo]);
-  useEffect(() => { localStorage.setItem(KEY_CONTENT, JSON.stringify(homepageContent)); }, [homepageContent]);
-  useEffect(() => { localStorage.setItem(KEY_ACTIVITIES, JSON.stringify(activities)); }, [activities]);
+  // Pagination for enquiries
+  const [enquiries, setEnquiries] = useState<AdminEnquiry[]>([]);
+  const [lastEnquiryDoc, setLastEnquiryDoc] = useState<DocumentSnapshot | null>(null);
+  const [hasMoreEnquiries, setHasMoreEnquiries] = useState(true);
 
-  // Firestore Real-Time Listener for Enquiries (Cross-Device Sync)
+  // Sync activities locally
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    localStorage.setItem(KEY_ACTIVITIES, JSON.stringify(activities));
+  }, [activities]);
 
-    try {
-      const q = query(collection(db, COLLECTIONS.ENQUIRIES), orderBy('createdAt', 'desc'));
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        if (!snapshot.empty) {
-          const firestoreEnquiries: AdminEnquiry[] = snapshot.docs.map((docSnap) => {
-            const data = docSnap.data();
-            const createdDate = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
-            const timestampMillis = data.createdAt?.toMillis ? data.createdAt.toMillis() : Date.now();
-            return {
-              id: docSnap.id,
-              customerName: data.customerName || 'Anonymous Customer',
-              phone: data.phone || '',
-              email: data.email || undefined,
-              productRequirement: data.productRequirement || 'General Enquiry',
-              message: data.message || '',
-              date: formatDateTime(createdDate),
-              timestamp: timestampMillis,
-              source: data.source || 'Web Quote',
-              status: data.status || 'NEW',
-              priority: data.priority || 'MEDIUM',
-              internalNotes: data.internalNotes || [],
-            };
-          });
-
-          setEnquiries(firestoreEnquiries);
-        }
-      }, (err) => {
-        console.warn('[AdminStore] Firestore real-time enquiry sync note:', err);
-      });
-
-      return () => unsubscribe();
-    } catch {
-      // Fall back to local state if Firestore is unavailable
-    }
-  }, []);
-
-  // Log Helper
+  // Activity Logger
   const logActivity = (action: string, resource: string, details?: string, status: 'SUCCESS' | 'WARNING' | 'INFO' = 'SUCCESS') => {
     const newAct: AdminActivityItem = {
       id: `act-${Date.now()}`,
-      userName: 'Admin User',
-      userRole: 'ADMIN',
+      userName: userProfile?.displayName || currentUser?.email || 'System Admin',
+      userRole: userProfile?.role || 'STAFF',
       action,
       resource,
       timestamp: 'Just now',
@@ -349,243 +202,518 @@ export function useAdminStore() {
     setActivities(prev => [newAct, ...prev.slice(0, 40)]);
   };
 
-  // Products CRUD
-  const addProduct = (prod: Omit<Product, 'id'>) => {
-    const newId = `prod-${Date.now()}`;
-    const newProduct: Product = { ...prod, id: newId };
-    setProducts(prev => [newProduct, ...prev]);
-    logActivity('Created Product', newProduct.name, `Category: ${newProduct.category}`);
-    return newProduct;
-  };
+  // 1. Subscribe to Products
+  useEffect(() => {
+    return onSnapshot(query(collection(db, COLLECTIONS.PRODUCTS), orderBy('createdAt', 'desc')), (snapshot) => {
+      const prods = snapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          name: data.name || '',
+          slug: data.slug || '',
+          brand: data.brand || '',
+          brandSlug: data.brandSlug || '',
+          category: data.category || '',
+          categorySlug: data.categorySlug || '',
+          description: data.description || '',
+          shortDescription: data.shortDescription || '',
+          specifications: data.specifications || [],
+          images: data.images || [],
+          isFeatured: data.isFeatured || false,
+          isNew: data.isNew || false,
+          inStock: data.inStock ?? true,
+          published: data.published ?? true,
+          tags: data.tags || []
+        } as Product;
+      });
+      setProducts(snapshot.empty ? initialProducts : prods);
+    });
+  }, []);
 
-  const updateProduct = (id: string, updates: Partial<Product>) => {
-    setProducts(prev => prev.map(p => (p.id === id ? { ...p, ...updates } : p)));
-    const target = products.find(p => p.id === id);
-    if (target) {
-      logActivity('Updated Product', target.name, `Updated specifications or inventory`);
+  // 2. Subscribe to Categories
+  useEffect(() => {
+    return onSnapshot(query(collection(db, COLLECTIONS.CATEGORIES), orderBy('sortOrder', 'asc')), (snapshot) => {
+      const cats = snapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          name: data.name || '',
+          slug: data.slug || '',
+          description: data.description || '',
+          icon: data.icon || 'ToggleRight',
+          productCount: data.productCount || 0,
+          image: data.image || '',
+          active: data.active ?? true
+        } as Category;
+      });
+      setCategories(snapshot.empty ? initialCategories : cats);
+    });
+  }, []);
+
+  // 3. Subscribe to Brands
+  useEffect(() => {
+    return onSnapshot(query(collection(db, COLLECTIONS.BRANDS), orderBy('sortOrder', 'asc')), (snapshot) => {
+      const brs = snapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          name: data.name || '',
+          slug: data.slug || '',
+          logo: data.logo || '',
+          description: data.description || '',
+          isAuthorized: data.isAuthorized || false,
+          categories: data.categories || [],
+          tagline: data.tagline || '',
+          active: data.active ?? true
+        } as Brand;
+      });
+      setBrands(snapshot.empty ? initialBrands : brs);
+    });
+  }, []);
+
+  // 4. Subscribe to Gallery
+  useEffect(() => {
+    return onSnapshot(query(collection(db, COLLECTIONS.GALLERY), orderBy('sortOrder', 'asc')), (snapshot) => {
+      const gals = snapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          src: data.url || data.src || '',
+          alt: data.alt || '',
+          category: data.category || 'products'
+        } as GalleryImage;
+      });
+      setGallery(snapshot.empty ? initialGallery : gals);
+    });
+  }, []);
+
+  // 5. Subscribe to Testimonials
+  useEffect(() => {
+    return onSnapshot(query(collection(db, COLLECTIONS.TESTIMONIALS), orderBy('createdAt', 'desc')), (snapshot) => {
+      const tests = snapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          name: data.name || '',
+          role: data.role || '',
+          rating: data.rating || 5,
+          review: data.review || data.content || '',
+          approved: data.approved || false,
+          active: data.active || false,
+          date: data.date || 'Recently'
+        };
+      });
+      setTestimonials(snapshot.empty ? initialTestimonials : tests);
+    });
+  }, []);
+
+  // 6. Subscribe to FAQs
+  useEffect(() => {
+    return onSnapshot(query(collection(db, COLLECTIONS.FAQS), orderBy('sortOrder', 'asc')), (snapshot) => {
+      const faqList = snapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          question: data.question || '',
+          answer: data.answer || '',
+          category: data.category || 'General'
+        } as FAQ;
+      });
+      setFaqs(snapshot.empty ? initialFaqs : faqList);
+    });
+  }, []);
+
+  // 7. Subscribe to Business Info
+  useEffect(() => {
+    return subscribeToBusinessInfo((info) => {
+      if (info) {
+        setBusinessInfo({
+          ...initialBusinessInfo,
+          ...info,
+          address: { ...initialBusinessInfo.address, ...(info.address || {}) },
+          hours: { ...initialBusinessInfo.hours, ...(info.hours || {}) },
+          social: { ...initialBusinessInfo.social, ...(info.social || {}) }
+        });
+      } else {
+        setBusinessInfo(initialBusinessInfo);
+      }
+    });
+  }, []);
+
+  // 8. Subscribe to Homepage CMS Singleton
+  useEffect(() => {
+    return onSnapshot(doc(db, COLLECTIONS.BUSINESS_INFO, 'homepage'), (snap) => {
+      if (snap.exists()) {
+        setHomepageContent(snap.data() as HomepageContent);
+      } else {
+        setHomepageContent(INITIAL_HOMEPAGE_CONTENT);
+      }
+    });
+  }, []);
+
+  // 9. Subscribe to Enquiries with limit of 50 (Real-time Stream)
+  useEffect(() => {
+    const q = query(
+      collection(db, COLLECTIONS.ENQUIRIES),
+      orderBy('createdAt', 'desc'),
+      limit(50)
+    );
+
+    return onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        setLastEnquiryDoc(snapshot.docs[snapshot.docs.length - 1]);
+        setHasMoreEnquiries(snapshot.docs.length === 50);
+
+        const mapped: AdminEnquiry[] = snapshot.docs.map(docSnap => {
+          const data = docSnap.data();
+          const createdDate = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
+          const timestampMillis = data.createdAt?.toMillis ? data.createdAt.toMillis() : Date.now();
+          return {
+            id: docSnap.id,
+            customerName: data.customerName || 'Anonymous Customer',
+            phone: data.phone || '',
+            email: data.email || undefined,
+            productRequirement: data.productRequirement || 'General Enquiry',
+            message: data.message || '',
+            date: formatDateTime(createdDate),
+            timestamp: timestampMillis,
+            source: data.source || 'Web Quote',
+            status: data.status || 'NEW',
+            priority: data.priority || 'MEDIUM',
+            internalNotes: data.internalNotes || []
+          };
+        });
+        setEnquiries(mapped);
+      } else {
+        setEnquiries([]);
+        setLastEnquiryDoc(null);
+        setHasMoreEnquiries(false);
+      }
+    }, (err) => {
+      console.warn('[AdminStore] Firestore real-time enquiry sync note:', err);
+    });
+  }, []);
+
+  // Load More Enquiries (One-Time fetch of next batch)
+  const loadMoreEnquiries = async () => {
+    if (!lastEnquiryDoc || !hasMoreEnquiries) return;
+
+    try {
+      const q = query(
+        collection(db, COLLECTIONS.ENQUIRIES),
+        orderBy('createdAt', 'desc'),
+        startAfter(lastEnquiryDoc),
+        limit(50)
+      );
+
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        setLastEnquiryDoc(snapshot.docs[snapshot.docs.length - 1]);
+        setHasMoreEnquiries(snapshot.docs.length === 50);
+
+        const batch: AdminEnquiry[] = snapshot.docs.map(docSnap => {
+          const data = docSnap.data();
+          const createdDate = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
+          const timestampMillis = data.createdAt?.toMillis ? data.createdAt.toMillis() : Date.now();
+          return {
+            id: docSnap.id,
+            customerName: data.customerName || 'Anonymous Customer',
+            phone: data.phone || '',
+            email: data.email || undefined,
+            productRequirement: data.productRequirement || 'General Enquiry',
+            message: data.message || '',
+            date: formatDateTime(createdDate),
+            timestamp: timestampMillis,
+            source: data.source || 'Web Quote',
+            status: data.status || 'NEW',
+            priority: data.priority || 'MEDIUM',
+            internalNotes: data.internalNotes || []
+          };
+        });
+
+        // Append to existing list, filtering duplicates
+        setEnquiries(prev => {
+          const existingIds = new Set(prev.map(e => e.id));
+          const uniqueBatch = batch.filter(b => !existingIds.has(b.id));
+          return [...prev, ...uniqueBatch];
+        });
+      } else {
+        setHasMoreEnquiries(false);
+      }
+    } catch (err) {
+      console.error('[AdminStore] Failed to load more enquiries:', err);
     }
   };
 
-  const deleteProduct = (id: string) => {
+  // --- CRUD ACTIONS ---
+
+  // Products
+  const addProduct = async (prod: Omit<Product, 'id'>) => {
+    const actor = currentUser?.uid || 'unknown';
+    const newId = await createProductService({
+      ...prod,
+      brandId: '',
+      categoryId: '',
+      storagePaths: [],
+      seoTitle: `${prod.name} - Sai Enterprises`,
+      seoDescription: prod.shortDescription || prod.description.slice(0, 150)
+    } as any, actor);
+
+    logActivity('Created Product', prod.name, `Category: ${prod.category}`);
+    return { ...prod, id: newId } as Product;
+  };
+
+  const updateProduct = async (id: string, updates: Partial<Product>) => {
+    const actor = currentUser?.uid || 'unknown';
+    await updateProductService(id, updates as any, actor);
     const target = products.find(p => p.id === id);
-    setProducts(prev => prev.filter(p => p.id !== id));
     if (target) {
-      logActivity('Deleted Product', target.name, `Removed from catalogue`, 'WARNING');
+      logActivity('Updated Product', target.name, 'Updated specifications or inventory');
     }
   };
 
-  const toggleProductStock = (id: string) => {
-    setProducts(prev => prev.map(p => {
-      if (p.id === id) {
-        const next = !p.inStock;
-        logActivity('Toggled Stock Status', p.name, `Status changed to ${next ? 'IN STOCK' : 'OUT OF STOCK'}`);
-        return { ...p, inStock: next };
-      }
-      return p;
-    }));
+  const deleteProduct = async (id: string) => {
+    await deleteProductService(id);
+    const target = products.find(p => p.id === id);
+    if (target) {
+      logActivity('Deleted Product', target.name, 'Removed from catalogue', 'WARNING');
+    }
   };
 
-  const toggleProductFeatured = (id: string) => {
-    setProducts(prev => prev.map(p => {
-      if (p.id === id) {
-        return { ...p, isFeatured: !p.isFeatured };
-      }
-      return p;
-    }));
+  const toggleProductStock = async (id: string) => {
+    const target = products.find(p => p.id === id);
+    if (target) {
+      const next = !target.inStock;
+      await updateProduct(id, { inStock: next });
+      logActivity('Toggled Stock Status', target.name, `Status changed to ${next ? 'IN STOCK' : 'OUT OF STOCK'}`);
+    }
   };
 
-  // Categories CRUD
-  const addCategory = (cat: Omit<Category, 'id'>) => {
-    const newId = `cat-${Date.now()}`;
-    const newCat: Category = { ...cat, id: newId };
-    setCategories(prev => [...prev, newCat]);
-    logActivity('Added Category', newCat.name);
-    return newCat;
+  const toggleProductFeatured = async (id: string) => {
+    const target = products.find(p => p.id === id);
+    if (target) {
+      await updateProduct(id, { isFeatured: !target.isFeatured });
+    }
   };
 
-  const updateCategory = (id: string, updates: Partial<Category>) => {
-    setCategories(prev => prev.map(c => (c.id === id ? { ...c, ...updates } : c)));
+  // Categories
+  const addCategory = async (cat: Omit<Category, 'id'>) => {
+    const newId = await createCategoryService({
+      ...cat,
+      featured: false,
+      active: true,
+      sortOrder: categories.length + 1
+    } as any);
+    logActivity('Added Category', cat.name);
+    return { ...cat, id: newId } as Category;
+  };
+
+  const updateCategory = async (id: string, updates: Partial<Category>) => {
+    await updateCategoryService(id, updates as any);
     logActivity('Updated Category', updates.name || id);
   };
 
-  const deleteCategory = (id: string) => {
+  const deleteCategory = async (id: string) => {
     const target = categories.find(c => c.id === id);
-    setCategories(prev => prev.filter(c => c.id !== id));
+    await deleteCategoryService(id);
     if (target) logActivity('Deleted Category', target.name, '', 'WARNING');
   };
 
-  // Brands CRUD
-  const addBrand = (brand: Omit<Brand, 'id'>) => {
-    const newId = `brand-${Date.now()}`;
-    const newBrand: Brand = { ...brand, id: newId };
-    setBrands(prev => [...prev, newBrand]);
-    logActivity('Added Brand', newBrand.name);
-    return newBrand;
+  // Brands
+  const addBrand = async (brand: Omit<Brand, 'id'>) => {
+    const newId = await createBrandService({
+      ...brand,
+      featured: false,
+      active: true,
+      sortOrder: brands.length + 1
+    } as any);
+    logActivity('Added Brand', brand.name);
+    return { ...brand, id: newId } as Brand;
   };
 
-  const updateBrand = (id: string, updates: Partial<Brand>) => {
-    setBrands(prev => prev.map(b => (b.id === id ? { ...b, ...updates } : b)));
+  const updateBrand = async (id: string, updates: Partial<Brand>) => {
+    await updateBrandService(id, updates as any);
     logActivity('Updated Brand', updates.name || id);
   };
 
-  const deleteBrand = (id: string) => {
+  const deleteBrand = async (id: string) => {
     const target = brands.find(b => b.id === id);
-    setBrands(prev => prev.filter(b => b.id !== id));
+    await deleteBrandService(id);
     if (target) logActivity('Deleted Brand', target.name, '', 'WARNING');
   };
 
-  // Enquiries Management
-  const addEnquiry = (enquiry: Omit<AdminEnquiry, 'id' | 'status' | 'internalNotes'>) => {
-    const newEnquiry: AdminEnquiry = {
-      ...enquiry,
-      date: enquiry.date && enquiry.date.includes(',') ? enquiry.date : formatDateTime(new Date()),
-      id: `enq-${Date.now()}`,
-      status: 'NEW',
-      internalNotes: [],
-    };
-    setEnquiries(prev => [newEnquiry, ...prev]);
-    logActivity('Received New Enquiry', `From ${enquiry.customerName}`);
-    return newEnquiry;
-  };
-
-  const updateEnquiryStatus = (id: string, status: AdminEnquiry['status']) => {
-    setEnquiries(prev => prev.map(e => (e.id === id ? { ...e, status } : e)));
+  // Enquiries
+  const updateEnquiryStatus = async (id: string, status: AdminEnquiry['status']) => {
+    await updateEnquiryStatusInFirestore(id, status as any);
     const target = enquiries.find(e => e.id === id);
     if (target) {
       logActivity('Updated Enquiry Status', `Enquiry #${id} (${target.customerName})`, `Status changed to ${status}`);
     }
-    // Sync to Cloud Firestore in real-time for cross-device synchronization
-    updateEnquiryStatusInFirestore(id, status as any).catch(err => {
-      console.warn('[AdminStore] Firestore status update error:', err);
-    });
   };
 
-  const addEnquiryNote = (enquiryId: string, author: string, noteText: string) => {
-    const newNote = {
-      id: `note-${Date.now()}`,
-      author,
-      note: noteText,
-      date: formatDateTime(new Date())
-    };
-    setEnquiries(prev => prev.map(e => {
-      if (e.id === enquiryId) {
-        const updatedNotes = [newNote, ...e.internalNotes];
-        const docRef = doc(db, COLLECTIONS.ENQUIRIES, enquiryId);
-        updateDoc(docRef, {
-          internalNotes: updatedNotes,
-          updatedAt: serverTimestamp()
-        }).catch(err => {
-          console.warn('[AdminStore] Firestore note update error:', err);
-        });
-        return { ...e, internalNotes: updatedNotes };
-      }
-      return e;
-    }));
+  const addEnquiryNote = async (enquiryId: string, author: string, noteText: string) => {
+    const target = enquiries.find(e => e.id === enquiryId);
+    if (target) {
+      await addEnquiryNoteInFirestore({ ...target } as any, noteText, author);
+    }
   };
 
-  // Gallery CRUD
-  const addGalleryImage = (img: Omit<GalleryImage, 'id'>) => {
-    const newImg: GalleryImage = { ...img, id: `gal-${Date.now()}` };
-    setGallery(prev => [newImg, ...prev]);
-    logActivity('Uploaded Gallery Image', newImg.alt);
-    return newImg;
+  // Gallery
+  const addGalleryImage = async (img: Omit<GalleryImage, 'id'>) => {
+    const actor = currentUser?.uid || 'unknown';
+    const newId = await createGalleryImageService({
+      url: img.src,
+      storagePath: '',
+      alt: img.alt,
+      category: img.category as any,
+      featured: false,
+      sortOrder: gallery.length + 1,
+      createdBy: actor
+    }, actor);
+    logActivity('Uploaded Gallery Image', img.alt);
+    return { ...img, id: newId } as GalleryImage;
   };
 
-  const deleteGalleryImage = (id: string) => {
-    setGallery(prev => prev.filter(g => g.id !== id));
+  const deleteGalleryImage = async (id: string) => {
+    await deleteGalleryImageService(id);
     logActivity('Deleted Gallery Image', id, '', 'WARNING');
   };
 
-  // FAQs CRUD
-  const addFaq = (faq: Omit<FAQ, 'id'>) => {
-    const newFaq: FAQ = { ...faq, id: `faq-${Date.now()}` };
-    setFaqs(prev => [...prev, newFaq]);
-    logActivity('Added FAQ Question', newFaq.question);
-    return newFaq;
+  // FAQs
+  const addFaq = async (faq: Omit<FAQ, 'id'>) => {
+    const newId = await createFAQService({
+      ...faq,
+      sortOrder: faqs.length + 1,
+      active: true
+    });
+    logActivity('Added FAQ Question', faq.question);
+    return { ...faq, id: newId } as FAQ;
   };
 
-  const updateFaq = (id: string, updates: Partial<FAQ>) => {
-    setFaqs(prev => prev.map(f => (f.id === id ? { ...f, ...updates } : f)));
+  const updateFaq = async (id: string, updates: Partial<FAQ>) => {
+    await updateFAQService(id, updates);
     logActivity('Updated FAQ', id);
   };
 
-  const deleteFaq = (id: string) => {
-    setFaqs(prev => prev.filter(f => f.id !== id));
+  const deleteFaq = async (id: string) => {
+    await deleteFAQService(id);
     logActivity('Deleted FAQ', id, '', 'WARNING');
   };
 
-  // Business Info Update
-  const updateBusinessInformation = (info: Partial<typeof initialBusinessInfo>) => {
-    setBusinessInfo(prev => ({ ...prev, ...info }));
+  // Business Info
+  const updateBusinessInformation = async (info: Partial<typeof initialBusinessInfo>) => {
+    await updateBusinessInfoService(info);
     logActivity('Updated Business Information', 'Shop Details & Contacts');
   };
 
-  // Homepage Content Update
-  const updateHomepageContent = (content: Partial<HomepageContent>) => {
-    setHomepageContent(prev => ({ ...prev, ...content }));
+  // Homepage content
+  const updateHomepageContent = async (content: Partial<HomepageContent>) => {
+    await setDoc(doc(db, COLLECTIONS.BUSINESS_INFO, 'homepage'), content, { merge: true });
     logActivity('Updated Homepage CMS', 'Hero & Announcement Banners');
   };
 
-  // Reset to Defaults
-  const resetToFactoryDefaults = () => {
-    localStorage.removeItem(KEY_PRODUCTS);
-    localStorage.removeItem(KEY_CATEGORIES);
-    localStorage.removeItem(KEY_BRANDS);
-    localStorage.removeItem(KEY_GALLERY);
-    localStorage.removeItem(KEY_TESTIMONIALS);
-    localStorage.removeItem(KEY_FAQS);
-    localStorage.removeItem(KEY_ENQUIRIES);
-    localStorage.removeItem(KEY_BUSINESS);
-    localStorage.removeItem(KEY_CONTENT);
-    localStorage.removeItem(KEY_ACTIVITIES);
+  // Reset/Factory seeding (Admin)
+  const resetToFactoryDefaults = async () => {
+    // Simple batch reset/override seeder call
+    const batch = writeBatch(db);
     
-    setProducts(initialProducts);
-    setCategories(initialCategories);
-    setBrands(initialBrands);
-    setGallery(initialGallery);
-    setTestimonials(initialTestimonials);
-    setFaqs(initialFaqs);
-    setEnquiries(INITIAL_ENQUIRIES);
-    setBusinessInfo(initialBusinessInfo);
-    setHomepageContent(INITIAL_HOMEPAGE_CONTENT);
-    setActivities(INITIAL_ACTIVITIES);
+    // Clear and override businessInfo
+    batch.set(doc(db, COLLECTIONS.BUSINESS_INFO, 'main'), {
+      ...initialBusinessInfo,
+      updatedAt: serverTimestamp()
+    });
+
+    // Seed Categories
+    for (let i = 0; i < initialCategories.length; i++) {
+      const cat = initialCategories[i];
+      const catRef = doc(collection(db, COLLECTIONS.CATEGORIES));
+      batch.set(catRef, {
+        name: cat.name,
+        slug: cat.slug,
+        description: cat.description,
+        icon: cat.icon,
+        image: cat.image,
+        featured: i < 5,
+        active: true,
+        sortOrder: i + 1,
+        productCount: cat.productCount || 10,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    // Seed Brands
+    for (let i = 0; i < initialBrands.length; i++) {
+      const b = initialBrands[i];
+      const bRef = doc(collection(db, COLLECTIONS.BRANDS));
+      batch.set(bRef, {
+        name: b.name,
+        slug: b.slug,
+        description: b.description,
+        tagline: b.tagline,
+        logo: b.logo,
+        isAuthorized: b.isAuthorized,
+        categories: b.categories,
+        featured: i < 4,
+        active: true,
+        sortOrder: i + 1,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    await batch.commit();
     logActivity('Reset Database', 'Restored initial store seed data', '', 'WARNING');
   };
 
-  return {
-    products,
-    categories,
-    brands,
-    gallery,
-    testimonials,
-    faqs,
-    enquiries,
-    businessInfo,
-    homepageContent,
-    activities,
-    // Actions
-    addProduct,
-    updateProduct,
-    deleteProduct,
-    toggleProductStock,
-    toggleProductFeatured,
-    addCategory,
-    updateCategory,
-    deleteCategory,
-    addBrand,
-    updateBrand,
-    deleteBrand,
-    addEnquiry,
-    updateEnquiryStatus,
-    addEnquiryNote,
-    addGalleryImage,
-    deleteGalleryImage,
-    addFaq,
-    updateFaq,
-    deleteFaq,
-    updateBusinessInformation,
-    updateHomepageContent,
-    resetToFactoryDefaults,
-    logActivity
-  };
-}
+  return React.createElement(
+    AdminStoreContext.Provider,
+    {
+      value: {
+        products,
+        categories,
+        brands,
+        gallery,
+        testimonials,
+        faqs,
+        enquiries,
+        businessInfo,
+        homepageContent,
+        activities,
+        hasMoreEnquiries,
+        addProduct,
+        updateProduct,
+        deleteProduct,
+        toggleProductStock,
+        toggleProductFeatured,
+        addCategory,
+        updateCategory,
+        deleteCategory,
+        addBrand,
+        updateBrand,
+        deleteBrand,
+        updateEnquiryStatus,
+        addEnquiryNote,
+        addGalleryImage,
+        deleteGalleryImage,
+        addFaq,
+        updateFaq,
+        deleteFaq,
+        updateBusinessInformation,
+        updateHomepageContent,
+        loadMoreEnquiries,
+        resetToFactoryDefaults,
+        logActivity
+      }
+    },
+    children
+  );
+};
+
+export const useAdminStore = () => {
+  const context = useContext(AdminStoreContext);
+  if (context === undefined) {
+    throw new Error('useAdminStore must be used within an AdminStoreProvider');
+  }
+  return context;
+};

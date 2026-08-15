@@ -228,7 +228,7 @@ export const AdminSettings: React.FC = () => {
   const handleExportFullBackup = () => {
     const backupData = {
       exportDate: new Date().toISOString(),
-      store: 'Sai Enterprises Electricals',
+      store: 'Sai Enterprises',
       products,
       categories,
       brands,

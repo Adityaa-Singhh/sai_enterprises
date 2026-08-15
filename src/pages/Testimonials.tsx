@@ -2,10 +2,10 @@
 import { Star, Quote, ExternalLink, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Section, SectionHeader, StarRating, useScrollReveal } from '../components/ui';
-import { useAdminStore } from '../admin/data/adminStore';
+import { usePublicStore } from '../data/publicStore';
 
 export default function Testimonials() {
-  const { testimonials, businessInfo } = useAdminStore();
+  const { testimonials, businessInfo } = usePublicStore();
   const headerRef = useScrollReveal<HTMLDivElement>();
   const gridRef = useScrollReveal<HTMLDivElement>();
   const ctaRef = useScrollReveal<HTMLDivElement>();

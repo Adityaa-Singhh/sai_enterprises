@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Filter, Image as ImageIcon } from 'lucide-react';
 import { Section, SectionHeader, ProductImage, Lightbox, Badge, useScrollReveal } from '../components/ui';
-import { useAdminStore } from '../admin/data/adminStore';
+import { usePublicStore } from '../data/publicStore';
 
 export default function Gallery() {
-  const { gallery: galleryImages, businessInfo } = useAdminStore();
+  const { gallery: galleryImages, businessInfo } = usePublicStore();
   const [activeFilter, setActiveFilter] = useState('all');
   const [selectedImage, setSelectedImage] = useState<typeof galleryImages[0] | null>(null);
   

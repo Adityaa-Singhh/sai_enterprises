@@ -23,7 +23,7 @@ export const AdminAnalytics: React.FC = () => {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | '12m'>('30d');
 
   const handleExportReport = () => {
-    alert(`Exporting Sai Enterprises Electricals Performance Report (${timeRange}) in PDF format...`);
+    alert(`Exporting Sai Enterprises Performance Report (${timeRange}) in PDF format...`);
   };
 
   return (
@@ -176,16 +176,16 @@ export const AdminAnalytics: React.FC = () => {
               <MapPin className="w-5 h-5 text-volt" />
               <h3 className="text-lg font-bold text-white tracking-tight">Regional Demand Breakdown</h3>
             </div>
-            <span className="text-xs text-slate-400 font-bold">NCR Distribution</span>
+            <span className="text-xs text-slate-400 font-bold">Odisha Distribution</span>
           </div>
 
           <div className="space-y-3">
             {[
-              { region: 'Gurugram (Sector 14, 15, 29, Cyber City)', percent: 48, orders: '1,032 quotes' },
-              { region: 'Delhi NCR (South & West Delhi)', percent: 24, orders: '516 quotes' },
-              { region: 'Faridabad & Ballabhgarh Industrial Area', percent: 16, orders: '344 quotes' },
-              { region: 'Noida & Greater Noida Expressway', percent: 8, orders: '172 quotes' },
-              { region: 'Other Haryana Districts (Manesar, Rewari)', percent: 4, orders: '86 quotes' },
+              { region: 'Rourkela (Udit Nagar, Civil Township)', percent: 48, orders: '1,032 quotes' },
+              { region: 'Sundargarh & Jharsuguda', percent: 24, orders: '516 quotes' },
+              { region: 'Birmitrapur & Kansbahal Industrial Area', percent: 16, orders: '344 quotes' },
+              { region: 'Rajgangpur', percent: 8, orders: '172 quotes' },
+              { region: 'Other Odisha Districts (Sambalpur, Keonjhar)', percent: 4, orders: '86 quotes' },
             ].map((reg, idx) => (
               <div key={idx} className="space-y-1">
                 <div className="flex justify-between text-xs">

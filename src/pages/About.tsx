@@ -1,41 +1,75 @@
-import * as Icons from 'lucide-react';
+import {
+  ShieldCheck,
+  Sparkles,
+  Heart,
+  IndianRupee,
+  MapPin,
+  TrendingUp,
+  ArrowRight,
+  ExternalLink,
+  Clock,
+  Phone,
+  MessageCircle,
+  Check,
+  HelpCircle,
+  ToggleRight,
+  Plug,
+  Cable,
+  Unplug,
+  Lightbulb,
+  Fan,
+  Wrench,
+  Factory
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Section, SectionHeader, Counter, useScrollReveal } from '../components/ui';
 import { getWhatsAppUrl, getPhoneUrl, categories } from '../data';
-import { useAdminStore } from '../admin/data/adminStore';
+import { usePublicStore } from '../data/publicStore';
+
+const CAT_ICONS: Record<string, any> = {
+  ToggleRight,
+  Plug,
+  Cable,
+  Unplug,
+  Lightbulb,
+  ShieldCheck,
+  Fan,
+  Wrench,
+  Factory
+};
 
 export default function About() {
-  const { businessInfo } = useAdminStore();
+  const { businessInfo } = usePublicStore();
   const revealRef = useScrollReveal<HTMLDivElement>();
   
   const values = [
     {
-      icon: Icons.ShieldCheck,
+      icon: ShieldCheck,
       title: 'Trust & Integrity',
       description: 'We believe in doing the right thing, always. We only source genuine products from authorized brands to ensure absolute safety and reliability for your electrical needs.'
     },
     {
-      icon: Icons.Sparkles,
+      icon: Sparkles,
       title: 'Product Expertise',
       description: 'Our team possesses deep technical knowledge of the electrical products we sell. We do not just move boxes; we offer tailored advice to help you make informed decisions.'
     },
     {
-      icon: Icons.Heart,
+      icon: Heart,
       title: 'Customer First',
       description: 'We treat every customer like family. From large-scale contractors to individual homeowners, everyone receives the same dedicated attention, respect, and support.'
     },
     {
-      icon: Icons.IndianRupee,
+      icon: IndianRupee,
       title: 'Fair Pricing',
       description: 'We strive to offer competitive and transparent pricing without compromising on quality. We believe that premium electrical supplies should be accessible and affordable.'
     },
     {
-      icon: Icons.MapPin,
+      icon: MapPin,
       title: 'Local Commitment',
       description: 'We are deeply rooted in our community. We pride ourselves on understanding the specific needs of our local area and building long-lasting relationships with our neighbors.'
     },
     {
-      icon: Icons.TrendingUp,
+      icon: TrendingUp,
       title: 'Continuous Growth',
       description: 'The electrical industry is always evolving, and so are we. We continuously expand our catalog to include the latest technologies and innovations to serve you better.'
     }
@@ -53,7 +87,7 @@ export default function About() {
         <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-volt/15 border border-volt/30 text-volt text-sm font-semibold mb-6 shadow-lg">
-              <Icons.Sparkles className="w-4 h-4" />
+              <Sparkles className="w-4 h-4" />
               <span>Our Story</span>
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 leading-tight tracking-tight">
@@ -105,7 +139,7 @@ export default function About() {
             <div className="absolute -bottom-6 -left-6 bg-dark-1 border border-white/15 p-6 rounded-3xl shadow-2xl z-20 liquid-glass animate-bounce-slow hidden md:block">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-volt/20 flex items-center justify-center">
-                  <Icons.ShieldCheck className="w-6 h-6 text-volt" />
+                  <ShieldCheck className="w-6 h-6 text-volt" />
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-white flex items-center">
@@ -185,7 +219,7 @@ export default function About() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
           {categories.map((category) => {
-            const IconComponent = (Icons as any)[category.icon] || Icons.HelpCircle;
+            const IconComponent = CAT_ICONS[category.icon] || HelpCircle;
             return (
               <Link key={category.id} to={`/products?category=${category.slug}`} className="group">
                 <div className="glass-card p-6 rounded-3xl flex items-start gap-4 border border-white/10 hover:border-volt/40 transition-all duration-300 h-full">
@@ -196,7 +230,7 @@ export default function About() {
                     <h4 className="text-lg font-bold text-white mb-2 group-hover:text-volt transition-colors">{category.name}</h4>
                     <p className="text-slate-300 text-sm line-clamp-2 font-normal leading-relaxed">{category.description}</p>
                     <div className="flex items-center gap-1 mt-4 text-volt text-sm font-semibold opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-                      Explore Category <Icons.ArrowRight className="w-4 h-4" />
+                      Explore Category <ArrowRight className="w-4 h-4" />
                     </div>
                   </div>
                 </div>
@@ -227,20 +261,20 @@ export default function About() {
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
                   <div className="mt-1 p-3 rounded-2xl bg-dark-2 text-volt border border-white/10">
-                    <Icons.MapPin className="w-5 h-5" />
+                    <MapPin className="w-5 h-5" />
                   </div>
                   <div>
                     <h4 className="text-white font-bold mb-1">Our Location</h4>
                     <p className="text-slate-300 font-normal">{businessInfo.address.full}</p>
                     <a href={businessInfo.mapDirectionsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-volt text-sm font-semibold mt-2 hover:underline">
-                      Get Directions <Icons.ExternalLink className="w-3.5 h-3.5" />
+                      Get Directions <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   </div>
                 </div>
                 
                 <div className="flex items-start gap-4">
                   <div className="mt-1 p-3 rounded-2xl bg-dark-2 text-volt border border-white/10">
-                    <Icons.Clock className="w-5 h-5" />
+                    <Clock className="w-5 h-5" />
                   </div>
                   <div>
                     <h4 className="text-white font-bold mb-1">Business Hours</h4>
@@ -251,43 +285,43 @@ export default function About() {
             </div>
             
             <div className="flex flex-col justify-center space-y-4">
-              <a href={getPhoneUrl()} className="glass-card p-6 rounded-3xl flex items-center justify-between group border border-white/10 hover:border-volt/40 transition-all">
+              <a href={getPhoneUrl()} className="glass-card p-6 rounded-3xl flex items-center justify-between group border border-white/15 hover:border-volt/40 transition-all">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-dark-2 border border-white/10 flex items-center justify-center group-hover:bg-volt group-hover:text-dark-0 transition-colors">
-                    <Icons.Phone className="w-6 h-6 text-volt group-hover:text-dark-0" />
+                    <Phone className="w-6 h-6 text-volt group-hover:text-dark-0" />
                   </div>
                   <div>
                     <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Call us directly</div>
                     <div className="text-xl font-extrabold text-white">{businessInfo.phone}</div>
                   </div>
                 </div>
-                <Icons.ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-volt transition-colors" />
+                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-volt transition-colors" />
               </a>
               
-              <a href={getWhatsAppUrl()} target="_blank" rel="noopener noreferrer" className="glass-card p-6 rounded-3xl flex items-center justify-between group border border-white/10 hover:border-[#25D366]/50 transition-all">
+              <a href={getWhatsAppUrl()} target="_blank" rel="noopener noreferrer" className="glass-card p-6 rounded-3xl flex items-center justify-between group border border-white/15 hover:border-[#25D366]/50 transition-all">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-dark-2 border border-white/10 flex items-center justify-center group-hover:bg-[#25D366] group-hover:text-white transition-colors">
-                    <Icons.MessageCircle className="w-6 h-6 text-[#25D366] group-hover:text-white" />
+                    <MessageCircle className="w-6 h-6 text-[#25D366] group-hover:text-white" />
                   </div>
                   <div>
                     <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Chat on WhatsApp</div>
                     <div className="text-xl font-extrabold text-white">{businessInfo.whatsapp}</div>
                   </div>
                 </div>
-                <Icons.ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-[#25D366] transition-colors" />
+                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-[#25D366] transition-colors" />
               </a>
               
-              <Link to="/contact" className="glass-card p-6 rounded-3xl flex items-center justify-between group border border-white/10 hover:border-white/30 transition-all">
+              <Link to="/contact" className="glass-card p-6 rounded-3xl flex items-center justify-between group border border-white/15 hover:border-white/30 transition-all">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-dark-2 border border-white/10 flex items-center justify-center group-hover:bg-white group-hover:text-dark-0 transition-colors">
-                    <Icons.Check className="w-6 h-6 text-white group-hover:text-dark-0" />
+                    <Check className="w-6 h-6 text-white group-hover:text-dark-0" />
                   </div>
                   <div>
                     <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Need a bulk quote?</div>
                     <div className="text-xl font-extrabold text-white">Request Quotation</div>
                   </div>
                 </div>
-                <Icons.ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
+                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
               </Link>
             </div>
           </div>

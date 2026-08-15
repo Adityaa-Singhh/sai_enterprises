@@ -1,22 +1,76 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronRight, Check, X, ShieldCheck, Truck, Phone, MessageCircle } from 'lucide-react';
+import { ChevronRight, Check, X, ShieldCheck, Truck, Phone, MessageCircle, Loader2 } from 'lucide-react';
 import { getWhatsAppUrl, getPhoneUrl, getProductEnquiryUrl } from '../data';
-import { useAdminStore } from '../admin/data/adminStore';
 import { Section, SectionHeader, ProductImage, Badge, EmptyState, useScrollReveal } from '../components/ui';
+import { getProductBySlug, getPublishedProductsPaginated } from '../services/productService';
+import { trackProductView, trackProductClick, trackWhatsAppClick, trackPhoneCallClick } from '../services/analyticsService';
+import type { FirestoreProduct } from '../lib/firestore-types';
 
 export default function ProductDetail() {
-  const { products } = useAdminStore();
   const { slug } = useParams<{ slug: string }>();
-  const product = products.find(p => p.slug === slug);
   const revealRef = useScrollReveal<HTMLDivElement>();
   
+  const [product, setProduct] = useState<FirestoreProduct | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<FirestoreProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
 
   useEffect(() => {
     window.scrollTo(0, 0);
     setActiveImage(0);
+    
+    let mounted = true;
+    
+    const fetchProductData = async () => {
+      if (!slug) return;
+      setLoading(true);
+      try {
+        const fetchedProduct = await getProductBySlug(slug);
+        
+        if (mounted && fetchedProduct) {
+          setProduct(fetchedProduct);
+          trackProductView({
+            id: fetchedProduct.id,
+            name: fetchedProduct.name,
+            category: fetchedProduct.category,
+            brand: fetchedProduct.brand,
+          });
+          // Fetch related products (fetch 5 in case the current one is included)
+          const { products: related } = await getPublishedProductsPaginated(
+            null, 
+            fetchedProduct.categorySlug, 
+            '', 
+            5
+          );
+          
+          if (mounted) {
+            setRelatedProducts(
+              related.filter(p => p.id !== fetchedProduct.id).slice(0, 4)
+            );
+          }
+        } else if (mounted) {
+          setProduct(null);
+        }
+      } catch (err) {
+        console.error("Failed to load product", err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    fetchProductData();
+    return () => { mounted = false; };
   }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="pt-24 pb-16 min-h-[60vh] flex flex-col items-center justify-center">
+        <Loader2 className="w-12 h-12 text-volt animate-spin mb-4" />
+        <p className="text-slate-400">Loading product details...</p>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -34,10 +88,6 @@ export default function ProductDetail() {
       </div>
     );
   }
-
-  const relatedProducts = products
-    .filter(p => p.category === product.category && p.id !== product.id)
-    .slice(0, 4);
 
   return (
     <div className="pt-24 pb-0">
@@ -74,7 +124,7 @@ export default function ProductDetail() {
               
               {product.images.length > 1 && (
                 <div className="grid grid-cols-4 gap-4">
-                  {product.images.map((img, idx) => (
+                  {product.images.map((img: any, idx: number) => (
                     <button
                       key={idx}
                       onClick={() => setActiveImage(idx)}
@@ -118,14 +168,30 @@ export default function ProductDetail() {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 mb-10 pb-10 border-b border-white/10">
-                <a href={getProductEnquiryUrl(product.name)} target="_blank" rel="noopener noreferrer" className="btn-primary flex-1 justify-center py-4 rounded-full font-bold shadow-xl">
+                <a
+                  href={getProductEnquiryUrl(product.name)}
+                  onClick={() => trackWhatsAppClick('product_detail_enquire', { productName: product.name })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary flex-1 justify-center py-4 rounded-full font-bold shadow-xl"
+                >
                   Enquire Now
                 </a>
-                <a href={getWhatsAppUrl(`Hi, I'm interested in the ${product.name}.`)} target="_blank" rel="noopener noreferrer" className="btn-whatsapp flex-1 justify-center py-4 rounded-full font-bold shadow-xl">
+                <a
+                  href={getWhatsAppUrl(`Hi, I'm interested in the ${product.name}.`)}
+                  onClick={() => trackWhatsAppClick('product_detail_whatsapp', { productName: product.name })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-whatsapp flex-1 justify-center py-4 rounded-full font-bold shadow-xl"
+                >
                   <MessageCircle size={20} className="mr-2" />
                   WhatsApp
                 </a>
-                <a href={getPhoneUrl()} className="btn-secondary flex-1 justify-center py-4 rounded-full font-bold">
+                <a
+                  href={getPhoneUrl()}
+                  onClick={() => trackPhoneCallClick('product_detail_call')}
+                  className="btn-secondary flex-1 justify-center py-4 rounded-full font-bold"
+                >
                   <Phone size={20} className="mr-2 text-volt" />
                   Call Us
                 </a>
@@ -139,7 +205,7 @@ export default function ProductDetail() {
                     Technical Specifications
                   </h3>
                   <div className="glass-card rounded-2xl overflow-hidden border border-white/15 shadow-xl">
-                    {product.specifications.map((spec, index) => (
+                    {product.specifications.map((spec: any, index: number) => (
                       <div 
                         key={index} 
                         className={`flex flex-col sm:flex-row py-3.5 px-5 sm:px-6 border-b border-white/10 last:border-0 ${index % 2 === 0 ? 'bg-white/5' : 'bg-transparent'}`}
@@ -191,8 +257,13 @@ export default function ProductDetail() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-stagger">
-              {relatedProducts.map((p) => (
-                <Link key={p.id} to={`/products/${p.slug}`} className="glass-card rounded-2xl overflow-hidden group hover:border-volt/50 transition-all duration-300 flex flex-col h-full border border-dark-2">
+              {relatedProducts.map((p: FirestoreProduct) => (
+                <Link
+                  key={p.id}
+                  to={`/products/${p.slug}`}
+                  onClick={() => trackProductClick({ id: p.id, name: p.name, category: p.category, brand: p.brand }, 'related_products')}
+                  className="glass-card rounded-2xl overflow-hidden group hover:border-volt/50 transition-all duration-300 flex flex-col h-full border border-dark-2"
+                >
                   <div className="relative aspect-[4/3] bg-dark-2/30 p-6 flex items-center justify-center overflow-hidden">
                     <ProductImage 
                       src={p.images[0]} 
@@ -244,15 +315,31 @@ export default function ProductDetail() {
               Get in touch with us for pricing, bulk orders, or technical details regarding the {product.name}.
             </p>
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-              <a href={getProductEnquiryUrl(product.name)} target="_blank" rel="noopener noreferrer" className="btn-primary py-4 px-8 w-full sm:w-auto justify-center text-lg">
+              <a
+                href={getProductEnquiryUrl(product.name)}
+                onClick={() => trackWhatsAppClick('product_bottom_cta_enquire', { productName: product.name })}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary py-4 px-8 w-full sm:w-auto justify-center text-lg"
+              >
                 Enquire Now
               </a>
-              <a href={getWhatsAppUrl(`I need more information about ${product.name}.`)} target="_blank" rel="noopener noreferrer" className="btn-whatsapp py-4 px-8 w-full sm:w-auto justify-center text-lg">
+              <a
+                href={getWhatsAppUrl(`I need more information about ${product.name}.`)}
+                onClick={() => trackWhatsAppClick('product_bottom_cta_whatsapp', { productName: product.name })}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-whatsapp py-4 px-8 w-full sm:w-auto justify-center text-lg"
+              >
                 <MessageCircle size={20} className="mr-2" />
                 WhatsApp
               </a>
-              <a href={getPhoneUrl()} className="btn-secondary py-4 px-8 w-full sm:w-auto justify-center text-lg">
-                <Phone size={20} className="mr-2" />
+              <a 
+                href={getPhoneUrl()} 
+                onClick={() => trackPhoneCallClick('product_bottom_cta_call')}
+                className="btn-secondary py-4 px-8 w-full sm:w-auto justify-center text-lg"
+              >
+                <Phone size={20} className="mr-2 text-volt" />
                 Call Us
               </a>
             </div>

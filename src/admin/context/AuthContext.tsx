@@ -197,6 +197,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
+
+
   // ---------------------------------------------------------------------------
   // login
   // ---------------------------------------------------------------------------
@@ -245,6 +247,44 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Ignore sign-out errors — state will clear via onAuthStateChanged
     }
   }, []);
+
+  // Safe Inactivity Session Timeout
+  useEffect(() => {
+    if (!currentUser || !userProfile) return;
+
+    const getTimeoutMs = (timeoutStr: string | undefined): number => {
+      switch (timeoutStr) {
+        case '15m': return 15 * 60 * 1000;
+        case '1h': return 60 * 60 * 1000;
+        case '7d': return 7 * 24 * 60 * 60 * 1000;
+        case '8h':
+        default:
+          return 8 * 60 * 60 * 1000;
+      }
+    };
+
+    const timeoutStr = (userProfile.settings?.sessionTimeout as string) || '8h';
+    const timeoutMs = getTimeoutMs(timeoutStr);
+    let timerId: any;
+
+    const resetTimer = () => {
+      clearTimeout(timerId);
+      timerId = setTimeout(() => {
+        console.log('[AuthContext] Logging out due to inactivity');
+        logout();
+      }, timeoutMs);
+    };
+
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(e => window.addEventListener(e, resetTimer));
+
+    resetTimer();
+
+    return () => {
+      clearTimeout(timerId);
+      events.forEach(e => window.removeEventListener(e, resetTimer));
+    };
+  }, [currentUser, userProfile, logout]);
 
   // ---------------------------------------------------------------------------
   // resetPassword

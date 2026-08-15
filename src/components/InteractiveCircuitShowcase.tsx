@@ -1,7 +1,42 @@
 import React, { useState } from 'react';
-import * as Icons from 'lucide-react';
+import {
+  Zap,
+  ToggleLeft,
+  ShieldCheck,
+  Lightbulb,
+  Sun,
+  Eye,
+  Activity,
+  CheckCircle,
+  Gauge,
+  Cpu,
+  Power,
+  Fan
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SpotlightCard } from './SpotlightCard';
+
+const Icons = {
+  Zap,
+  ToggleLeft,
+  ShieldCheck,
+  Lightbulb,
+  Sun,
+  Eye,
+  Activity,
+  CheckCircle,
+  Gauge,
+  Cpu,
+  Power,
+  Fan
+};
+
+const CIRCUIT_ICONS: Record<string, any> = {
+  Power,
+  Sun,
+  Fan,
+  ShieldCheck
+};
 
 export const InteractiveCircuitShowcase: React.FC = () => {
   // State for modular switches
@@ -105,7 +140,7 @@ export const InteractiveCircuitShowcase: React.FC = () => {
                 { key: 'surge', label: 'Surge Varistor', desc: 'SPD Class II Protection', icon: 'ShieldCheck' },
               ].map(item => {
                 const isOn = switches[item.key as keyof typeof switches];
-                const IconComponent = (Icons as any)[item.icon] || Icons.Zap;
+                const IconComponent = CIRCUIT_ICONS[item.icon] || Zap;
                 
                 return (
                   <button

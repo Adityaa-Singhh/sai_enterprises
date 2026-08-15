@@ -9,8 +9,9 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { getWhatsAppUrl, getPhoneUrl } from '../data';
-import { useAdminStore } from '../admin/data/adminStore';
+import { usePublicStore } from '../data/publicStore';
 import { ThemeToggleButton } from './ThemeToggle';
+import { trackWhatsAppClick, trackPhoneCallClick, trackQuoteModalOpen } from '../services/analyticsService';
 
 const navLinks = [
   { label: 'Home', to: '/' },
@@ -146,13 +147,17 @@ export default function Navbar({ onQuote }: { onQuote: () => void }) {
           <ThemeToggleButton variant="circle" start="top-right" blur={true} />
           <a
             href={getPhoneUrl()}
+            onClick={() => trackPhoneCallClick('navbar_desktop')}
             className="liquid-glass text-white text-sm font-semibold px-4 py-2.5 rounded-full hover:bg-white/10 transition-all flex items-center gap-2 border border-white/10"
           >
             <Phone size={14} className="text-volt" />
             Call Us
           </a>
           <button
-            onClick={onQuote}
+            onClick={() => {
+              trackQuoteModalOpen('navbar_desktop');
+              onQuote();
+            }}
             className="bg-gradient-to-r from-volt to-volt-dim text-dark-0 text-sm font-bold px-5 py-2.5 rounded-full hover:shadow-[0_4px_25px_rgba(0,229,255,0.45)] hover:scale-105 transition-all"
           >
             Get a Quote
@@ -206,30 +211,36 @@ export default function Navbar({ onQuote }: { onQuote: () => void }) {
             )
           )}
 
-          <div className="flex gap-2.5 mt-3 pt-3 border-t border-white/10">
+          <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
             <a
               href={getPhoneUrl()}
-              className="flex-1 liquid-glass text-white text-sm font-semibold px-4 py-3 rounded-2xl text-center flex items-center justify-center gap-2 border border-white/10"
+              onClick={() => trackPhoneCallClick('navbar_mobile')}
+              className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-white/10 text-white text-sm font-semibold border border-white/10"
             >
-              <Phone size={15} className="text-volt" />
-              Call
+              <Phone size={16} className="text-volt" />
+              Call Us
             </a>
             <a
               href={getWhatsAppUrl()}
+              onClick={() => trackWhatsAppClick('navbar_mobile')}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 bg-[#25d366] text-white text-sm font-semibold px-4 py-3 rounded-2xl text-center flex items-center justify-center gap-2 shadow-lg"
+              className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-[#25d366] text-white text-sm font-semibold"
             >
-              <MessageCircle size={15} />
+              <MessageCircle size={16} />
               WhatsApp
             </a>
+            <button
+              onClick={() => {
+                trackQuoteModalOpen('navbar_mobile');
+                setMenuOpen(false);
+                onQuote();
+              }}
+              className="py-3 rounded-2xl bg-gradient-to-r from-volt to-volt-dim text-dark-0 text-sm font-bold shadow-lg"
+            >
+              Get a Quote
+            </button>
           </div>
-          <button
-            onClick={() => { setMenuOpen(false); onQuote(); }}
-            className="w-full bg-gradient-to-r from-volt to-volt-dim text-dark-0 text-sm font-bold px-4 py-3.5 rounded-2xl mt-2 shadow-lg"
-          >
-            Get a Quote
-          </button>
         </div>
       )}
     </header>
@@ -239,7 +250,7 @@ export default function Navbar({ onQuote }: { onQuote: () => void }) {
 
 // ===== FOOTER =====
 export function Footer() {
-  const { businessInfo } = useAdminStore();
+  const { businessInfo } = usePublicStore();
   const footerLinks = [
     {
       title: 'Products',
@@ -356,6 +367,7 @@ export function MobileBottomBar({ onQuote }: { onQuote: () => void }) {
     <div className="mobile-bottom-bar">
       <a
         href={getPhoneUrl()}
+        onClick={() => trackPhoneCallClick('mobile_bottom_bar')}
         className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-2xl bg-white/10 text-white text-xs font-semibold border border-white/10 shadow-lg"
       >
         <Phone size={15} className="text-volt" />
@@ -363,6 +375,7 @@ export function MobileBottomBar({ onQuote }: { onQuote: () => void }) {
       </a>
       <a
         href={getWhatsAppUrl()}
+        onClick={() => trackWhatsAppClick('mobile_bottom_bar')}
         target="_blank"
         rel="noopener noreferrer"
         className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-2xl bg-[#25d366] text-white text-xs font-semibold shadow-lg"
@@ -371,7 +384,10 @@ export function MobileBottomBar({ onQuote }: { onQuote: () => void }) {
         WhatsApp
       </a>
       <button
-        onClick={onQuote}
+        onClick={() => {
+          trackQuoteModalOpen('mobile_bottom_bar');
+          onQuote();
+        }}
         className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-2xl bg-gradient-to-r from-volt to-volt-dim text-dark-0 text-xs font-bold shadow-lg"
       >
         <Zap size={15} />
@@ -390,6 +406,7 @@ export function WhatsAppFab() {
       <div className="whatsapp-ray-ring-2" />
       <a
         href={getWhatsAppUrl()}
+        onClick={() => trackWhatsAppClick('floating_action_button')}
         target="_blank"
         rel="noopener noreferrer"
         className="whatsapp-fab"

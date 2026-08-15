@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { ShieldCheck, ArrowRight, MessageCircle, Phone, Search, Award } from 'lucide-react';
 import { Section, Badge, useScrollReveal } from '../components/ui';
 import { getWhatsAppUrl, getPhoneUrl } from '../data';
-import { useAdminStore } from '../admin/data/adminStore';
+import { usePublicStore } from '../data/publicStore';
 
 export default function Brands() {
-  const { brands, categories, businessInfo } = useAdminStore();
+  const { brands, categories, businessInfo } = usePublicStore();
   const revealRef = useScrollReveal<HTMLDivElement>();
   
   const authorizedBrandsCount = useMemo(() => 

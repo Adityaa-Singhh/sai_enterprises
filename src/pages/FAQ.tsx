@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { ChevronDown, MessageCircle, Phone } from 'lucide-react';
 import { Section, SectionHeader, useScrollReveal } from '../components/ui';
 import { getWhatsAppUrl, getPhoneUrl } from '../data';
-import { useAdminStore } from '../admin/data/adminStore';
+import { usePublicStore } from '../data/publicStore';
 
 const categories = ['All', 'Products', 'Brands', 'Orders', 'Store', 'Delivery', 'Warranty', 'Returns', 'Services'];
 
 export default function FAQ() {
-  const { faqs } = useAdminStore();
+  const { faqs } = usePublicStore();
   const [activeCategory, setActiveCategory] = useState('All');
   const [openFaqId, setOpenFaqId] = useState<string | null>(null);
   const revealRef = useScrollReveal<HTMLDivElement>();

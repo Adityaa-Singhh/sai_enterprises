@@ -1,23 +1,34 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Search, X, Package, SlidersHorizontal, LayoutGrid, List, Check, MessageCircle, Eye, ShieldCheck } from 'lucide-react';
+import { Search, X, Package, SlidersHorizontal, LayoutGrid, List, Check, MessageCircle, Eye, ShieldCheck, Loader2 } from 'lucide-react';
 import { Section, SectionHeader, ProductImage, Badge, EmptyState, useScrollReveal } from '../components/ui';
 import { getProductEnquiryUrl } from '../data';
-import { useAdminStore } from '../admin/data/adminStore';
+import { usePublicStore } from '../data/publicStore';
+import { getPublishedProductsPaginated } from '../services/productService';
+import { trackSearchQuery } from '../services/analyticsService';
+import type { FirestoreProduct as Product } from '../lib/firestore-types';
 
 const Products = () => {
-  const { products, categories, brands } = useAdminStore();
+  const { categories, brands } = usePublicStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialCategory = searchParams.get('category') || '';
   const initialBrand = searchParams.get('brand') || '';
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedBrand, setSelectedBrand] = useState(initialBrand);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [quickViewProduct, setQuickViewProduct] = useState<typeof products[0] | null>(null);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+
+  // Pagination State
+  const [products, setProducts] = useState<Product[]>([]);
+  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const headerRef = useScrollReveal<HTMLDivElement>();
   const gridRef = useScrollReveal<HTMLDivElement>();
@@ -30,26 +41,82 @@ const Products = () => {
     setSearchParams(params);
   }, [selectedCategory, selectedBrand, setSearchParams]);
 
+  // Debounce Search
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  // Fetch initial products when filters change
+  useEffect(() => {
+    let mounted = true;
+    const fetchInitial = async () => {
+      setLoading(true);
+      try {
+        const { products: fetchedProducts, lastDoc: newLastDoc, hasMore: newHasMore } = 
+          await getPublishedProductsPaginated(null, selectedCategory, debouncedSearch, 24);
+        
+        if (mounted) {
+          setProducts(fetchedProducts as Product[]);
+          setLastDoc(newLastDoc);
+          setHasMore(newHasMore);
+          setLoading(false);
+          if (debouncedSearch) {
+            trackSearchQuery(debouncedSearch, fetchedProducts.length);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load products:', err);
+        if (mounted) setLoading(false);
+      }
+    };
+
+    fetchInitial();
+
+    return () => { mounted = false; };
+  }, [selectedCategory, debouncedSearch]);
+
+  const loadMore = async () => {
+    if (!hasMore || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const { products: fetchedProducts, lastDoc: newLastDoc, hasMore: newHasMore } = 
+        await getPublishedProductsPaginated(lastDoc, selectedCategory, debouncedSearch, 24);
+      
+      setProducts(prev => [...prev, ...(fetchedProducts as Product[])]);
+      setLastDoc(newLastDoc);
+      setHasMore(newHasMore);
+    } catch (err) {
+      console.error('Failed to load more products:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      const matchesSearch = searchQuery === '' || 
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+      // Name search is handled server-side now (via prefix query), 
+      // but we still do client-side refinement for brand, tags, and category.
+      const matchesSearch = debouncedSearch === '' || 
+        product.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        product.brand.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        product.category.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        (product.tags || []).some((tag: string) => tag.toLowerCase().includes(debouncedSearch.toLowerCase()));
 
-      const matchesCategory = selectedCategory === '' || product.categorySlug === selectedCategory;
       const matchesBrand = selectedBrand === '' || product.brandSlug === selectedBrand;
       const matchesStock = !inStockOnly || product.inStock;
 
-      return matchesSearch && matchesCategory && matchesBrand && matchesStock;
+      return matchesSearch && matchesBrand && matchesStock;
     });
-  }, [searchQuery, selectedCategory, selectedBrand, inStockOnly]);
+  }, [products, debouncedSearch, selectedBrand, inStockOnly]);
 
   const activeFiltersCount = (selectedCategory ? 1 : 0) + (selectedBrand ? 1 : 0) + (searchQuery ? 1 : 0) + (inStockOnly ? 1 : 0);
 
   const clearFilters = () => {
     setSearchQuery('');
+    setDebouncedSearch('');
     setSelectedCategory('');
     setSelectedBrand('');
     setInStockOnly(false);
@@ -136,7 +203,7 @@ const Products = () => {
           {/* View Mode & Count */}
           <div className="hidden lg:flex items-center gap-4 shrink-0">
             <span className="text-xs text-slate-300 font-medium">
-              <strong className="text-white">{filteredProducts.length}</strong> items
+              <strong className="text-white">{filteredProducts.length}</strong> items displayed
             </span>
             <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-full p-1">
               <button 
@@ -190,75 +257,98 @@ const Products = () => {
       {/* PRODUCTS DISPLAY GRID / LIST */}
       <Section className="!pt-6">
         <div ref={gridRef}>
-          {filteredProducts.length > 0 ? (
-            <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
-              {filteredProducts.map((product) => (
-                <div 
-                  key={product.id} 
-                  className={`glass-card rounded-3xl overflow-hidden flex flex-col group border border-white/10 hover:border-volt/40 transition-all duration-300 shadow-xl ${
-                    viewMode === 'list' ? 'sm:flex-row items-center' : ''
-                  }`}
-                >
-                  <div className={`relative overflow-hidden bg-dark-2 shrink-0 ${viewMode === 'list' ? 'w-full sm:w-64 aspect-[4/3]' : 'aspect-[4/3]'}`}>
-                    <ProductImage 
-                      src={product.images[0]} 
-                      alt={product.name} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
-                      {product.isNew && <Badge variant="volt">NEW</Badge>}
-                      {!product.inStock && <Badge variant="amber">OUT OF STOCK</Badge>}
-                      {product.inStock && !product.isNew && <Badge variant="green">IN STOCK</Badge>}
-                    </div>
-                    <div className="absolute top-4 right-4 liquid-glass px-3 py-1 rounded-full text-xs font-extrabold text-white backdrop-blur-md border border-white/20">
-                      {product.brand}
-                    </div>
+          {loading ? (
+             <div className="flex flex-col items-center justify-center py-24">
+               <Loader2 className="w-10 h-10 text-volt animate-spin mb-4" />
+               <p className="text-slate-400">Loading catalogue...</p>
+             </div>
+          ) : filteredProducts.length > 0 ? (
+            <>
+              <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
+                {filteredProducts.map((product) => (
+                  <div 
+                    key={product.id} 
+                    className={`glass-card rounded-3xl overflow-hidden flex flex-col group border border-white/10 hover:border-volt/40 transition-all duration-300 shadow-xl ${
+                      viewMode === 'list' ? 'sm:flex-row items-center' : ''
+                    }`}
+                  >
+                    <div className={`relative overflow-hidden bg-dark-2 shrink-0 ${viewMode === 'list' ? 'w-full sm:w-64 aspect-[4/3]' : 'aspect-[4/3]'}`}>
+                      <ProductImage 
+                        src={product.images[0]} 
+                        alt={product.name} 
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                      <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
+                        {product.isNew && <Badge variant="volt">NEW</Badge>}
+                        {!product.inStock && <Badge variant="amber">OUT OF STOCK</Badge>}
+                        {product.inStock && !product.isNew && <Badge variant="green">IN STOCK</Badge>}
+                      </div>
+                      <div className="absolute top-4 right-4 liquid-glass px-3 py-1 rounded-full text-xs font-extrabold text-white backdrop-blur-md border border-white/20">
+                        {product.brand}
+                      </div>
 
-                    {/* Quick View Floating Button */}
-                    <button 
-                      onClick={() => setQuickViewProduct(product)}
-                      className="absolute bottom-4 right-4 p-2.5 rounded-full bg-dark-0/80 text-volt hover:bg-volt hover:text-dark-0 transition-all duration-300 opacity-0 group-hover:opacity-100 shadow-lg border border-white/10"
-                      title="Quick Preview"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                  </div>
-                  
-                  <div className="p-6 flex flex-col flex-grow w-full">
-                    <p className="text-xs text-volt font-extrabold tracking-wider uppercase mb-1.5 flex items-center justify-between">
-                      <span>{product.category}</span>
-                      <span className="text-slate-400 font-normal">{product.brand}</span>
-                    </p>
-                    <Link to={`/products/${product.slug}`}>
-                      <h3 className="text-lg font-bold text-white mb-2 group-hover:text-volt transition-colors line-clamp-2">
-                        {product.name}
-                      </h3>
-                    </Link>
-                    <p className="text-slate-300 text-sm mb-6 flex-grow line-clamp-2 font-normal leading-relaxed">
-                      {product.shortDescription}
-                    </p>
+                      {/* Quick View Floating Button */}
+                      <button 
+                        onClick={() => setQuickViewProduct(product)}
+                        className="absolute bottom-4 right-4 p-2.5 rounded-full bg-dark-0/80 text-volt hover:bg-volt hover:text-dark-0 transition-all duration-300 opacity-0 group-hover:opacity-100 shadow-lg border border-white/10"
+                        title="Quick Preview"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    </div>
                     
-                    <div className="flex gap-2.5 mt-auto pt-2">
-                      <Link 
-                        to={`/products/${product.slug}`}
-                        className="btn-primary flex-1 py-3 rounded-full justify-center text-xs sm:text-sm font-bold shadow-lg"
-                      >
-                        View Details
+                    <div className="p-6 flex flex-col flex-grow w-full">
+                      <p className="text-xs text-volt font-extrabold tracking-wider uppercase mb-1.5 flex items-center justify-between">
+                        <span>{product.category}</span>
+                        <span className="text-slate-400 font-normal">{product.brand}</span>
+                      </p>
+                      <Link to={`/products/${product.slug}`}>
+                        <h3 className="text-lg font-bold text-white mb-2 group-hover:text-volt transition-colors line-clamp-2">
+                          {product.name}
+                        </h3>
                       </Link>
-                      <a 
-                        href={getProductEnquiryUrl(product.name)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn-whatsapp flex-1 py-3 rounded-full justify-center text-xs sm:text-sm font-bold gap-1.5"
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                        Enquire
-                      </a>
+                      <p className="text-slate-300 text-sm mb-6 flex-grow line-clamp-2 font-normal leading-relaxed">
+                        {product.shortDescription}
+                      </p>
+                      
+                      <div className="flex gap-2.5 mt-auto pt-2">
+                        <Link 
+                          to={`/products/${product.slug}`}
+                          className="btn-primary flex-1 py-3 rounded-full justify-center text-xs sm:text-sm font-bold shadow-lg"
+                        >
+                          View Details
+                        </Link>
+                        <a 
+                          href={getProductEnquiryUrl(product.name)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn-whatsapp flex-1 py-3 rounded-full justify-center text-xs sm:text-sm font-bold gap-1.5"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          Enquire
+                        </a>
+                      </div>
                     </div>
                   </div>
+                ))}
+              </div>
+              
+              {hasMore && (
+                <div className="mt-12 flex justify-center">
+                  <button 
+                    onClick={loadMore} 
+                    disabled={loadingMore}
+                    className="btn-secondary py-3 px-8 rounded-full font-bold flex items-center gap-2 border border-white/10"
+                  >
+                    {loadingMore ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Loading...
+                      </>
+                    ) : 'Load More Products'}
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           ) : (
             <EmptyState 
               icon={<Package className="w-12 h-12 text-volt" />}

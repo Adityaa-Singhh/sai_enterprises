@@ -17,6 +17,24 @@ service firebase.storage {
              request.resource.size < 5 * 1024 * 1024; // 5 MB limit
     }
 
+    // Retrieve Firestore user document
+    function getUserData() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Verify user profile exists and status is ACTIVE
+    function isActive() {
+      return isSignedIn() &&
+             firestore.exists(/databases/(default)/documents/users/$(request.auth.uid)) &&
+             getUserData().status == 'ACTIVE';
+    }
+
+    // Verify user is an OWNER or MANAGER
+    function isManagerOrAbove() {
+      return isActive() &&
+             (getUserData().role == 'OWNER' || getUserData().role == 'MANAGER');
+    }
+
     // ======================================================================
     // DEFAULT — deny everything not explicitly allowed
     // ======================================================================
@@ -32,8 +50,8 @@ service firebase.storage {
     // ======================================================================
     match /products/{productId}/{filename} {
       allow read: if true;
-      allow write: if isSignedIn() && isValidImage();
-      allow delete: if isSignedIn();
+      allow write: if isManagerOrAbove() && isValidImage();
+      allow delete: if isManagerOrAbove();
     }
 
     // ======================================================================
@@ -43,8 +61,8 @@ service firebase.storage {
     // ======================================================================
     match /brands/{brandId}/{filename} {
       allow read: if true;
-      allow write: if isSignedIn() && isValidImage();
-      allow delete: if isSignedIn();
+      allow write: if isManagerOrAbove() && isValidImage();
+      allow delete: if isManagerOrAbove();
     }
 
     // ======================================================================
@@ -54,18 +72,19 @@ service firebase.storage {
     // ======================================================================
     match /gallery/{imageId}/{filename} {
       allow read: if true;
-      allow write: if isSignedIn() && isValidImage();
-      allow delete: if isSignedIn();
+      allow write: if isManagerOrAbove() && isValidImage();
+      allow delete: if isManagerOrAbove();
     }
 
     // ======================================================================
     // CATEGORY IMAGES
     // Path: categories/{categoryId}/{filename}
+    // Public read | Admin write only
     // ======================================================================
     match /categories/{categoryId}/{filename} {
       allow read: if true;
-      allow write: if isSignedIn() && isValidImage();
-      allow delete: if isSignedIn();
+      allow write: if isManagerOrAbove() && isValidImage();
+      allow delete: if isManagerOrAbove();
     }
 
     // ======================================================================
@@ -75,8 +94,8 @@ service firebase.storage {
     // ======================================================================
     match /banners/{filename} {
       allow read: if true;
-      allow write: if isSignedIn() && isValidImage();
-      allow delete: if isSignedIn();
+      allow write: if isManagerOrAbove() && isValidImage();
+      allow delete: if isManagerOrAbove();
     }
 
     // ======================================================================
@@ -86,8 +105,8 @@ service firebase.storage {
     // ======================================================================
     match /avatars/{userId}/{filename} {
       allow read: if true;
-      allow write: if isSignedIn() && request.auth.uid == userId && isValidImage();
-      allow delete: if isSignedIn() && request.auth.uid == userId;
+      allow write: if isSignedIn() && request.auth.uid == userId && isActive() && isValidImage();
+      allow delete: if isSignedIn() && request.auth.uid == userId && isActive();
     }
 
   }
