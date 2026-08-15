@@ -8,7 +8,7 @@
     "rules": "storage.rules"
   },
   "hosting": {
-    "public": "public",
+    "public": "dist",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -18,6 +18,10 @@
       {
         "source": "/sitemap.xml",
         "function": "sitemap"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
       }
     ]
   },
