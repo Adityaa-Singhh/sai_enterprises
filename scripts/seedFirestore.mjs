@@ -69,17 +69,17 @@ const brands = [
 ];
 
 const testimonials = [
-  { name: 'Rajesh Kumar', role: 'Homeowner', rating: 5, review: 'Excellent shop! I got all the switches and sockets for my new home from VoltEdge. Very genuine and fair pricing.', approved: true, featured: true, active: true },
-  { name: 'Suresh Electricals', role: 'Electrician', rating: 5, review: "I have been buying all my electrical supplies from VoltEdge for over 3 years. They always have stock, give good rates for bulk orders, and the quality is always genuine.", approved: true, featured: true, active: true },
-  { name: 'Priya Sharma', role: 'Interior Designer', rating: 5, review: 'VoltEdge has an impressive range of switches and sockets from top brands. Highly recommended!', approved: true, featured: false, active: true },
-  { name: 'Manoj Constructions', role: 'Contractor', rating: 4, review: 'We regularly source wires, cables, and MCBs from VoltEdge for our construction projects. Competitive pricing and they always deliver on time.', approved: true, featured: false, active: true },
+  { name: 'Rajesh Kumar', role: 'Homeowner', rating: 5, review: 'Excellent shop! I got all the switches and sockets for my new home from Sai Enterprises. Very genuine and fair pricing.', approved: true, featured: true, active: true },
+  { name: 'Suresh Electricals', role: 'Electrician', rating: 5, review: "I have been buying all my electrical supplies from Sai Enterprises for over 3 years. They always have stock, give good rates for bulk orders, and the quality is always genuine.", approved: true, featured: true, active: true },
+  { name: 'Priya Sharma', role: 'Interior Designer', rating: 5, review: 'Sai Enterprises has an impressive range of switches and sockets from top brands. Highly recommended!', approved: true, featured: false, active: true },
+  { name: 'Manoj Constructions', role: 'Contractor', rating: 4, review: 'We regularly source wires, cables, and MCBs from Sai Enterprises for our construction projects. Competitive pricing and they always deliver on time.', approved: true, featured: false, active: true },
   { name: 'Anita Patel', role: 'Homeowner', rating: 5, review: 'Very professional shop. They explained the difference between various wire grades and helped me pick the safest option for my home.', approved: true, featured: false, active: true },
   { name: 'SK Traders', role: 'Business Owner', rating: 5, review: 'Best electrical shop in the area. They are authorized dealers for multiple brands which gives us confidence about genuine products.', approved: true, featured: false, active: true },
 ];
 
 const faqs = [
   { question: 'What electrical products do you sell?', answer: 'We offer a complete range of electrical products including modular switches, sockets, wires, cables, MCBs, distribution boards, LED lighting, fans, and electrical accessories.', category: 'Products', sortOrder: 1, active: true },
-  { question: 'Are you an authorized dealer for these brands?', answer: 'Yes, VoltEdge is an authorized dealer and distributor for PMCona and several other leading electrical brands. All products we sell are 100% genuine with manufacturer warranty.', category: 'Brands', sortOrder: 2, active: true },
+  { question: 'Are you an authorized dealer for these brands?', answer: 'Yes, Sai Enterprises is an authorized dealer and distributor for PMCona and several other leading electrical brands. All products we sell are 100% genuine with manufacturer warranty.', category: 'Brands', sortOrder: 2, active: true },
   { question: 'Do you provide quotations for bulk orders?', answer: 'Absolutely! We provide competitive quotations for bulk and project-based orders. Contact us via WhatsApp or phone with your requirements.', category: 'Orders', sortOrder: 3, active: true },
   { question: 'What are your store timings?', answer: 'Our store is open Monday to Saturday from 9:00 AM to 8:00 PM. We are closed on Sundays and public holidays.', category: 'Store', sortOrder: 4, active: true },
   { question: 'Do you offer delivery?', answer: 'Yes, we offer local delivery for orders within the city. For large orders, we can arrange transport.', category: 'Delivery', sortOrder: 5, active: true },
@@ -90,7 +90,7 @@ const faqs = [
 ];
 
 const galleryImages = [
-  { url: '/images/gallery/store-front.jpg', storagePath: '', alt: 'VoltEdge Store Front', category: 'exterior', featured: true, sortOrder: 1 },
+  { url: '/images/gallery/store-front.jpg', storagePath: '', alt: 'Sai Enterprises Store Front', category: 'exterior', featured: true, sortOrder: 1 },
   { url: '/images/gallery/interior-1.jpg', storagePath: '', alt: 'Store Interior — Wire Section', category: 'interior', featured: false, sortOrder: 2 },
   { url: '/images/gallery/products-display.jpg', storagePath: '', alt: 'Product Display Wall', category: 'products', featured: false, sortOrder: 3 },
   { url: '/images/gallery/brand-wall.jpg', storagePath: '', alt: 'Brand Display Area', category: 'brands', featured: false, sortOrder: 4 },
