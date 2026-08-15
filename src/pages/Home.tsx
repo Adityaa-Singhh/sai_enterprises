@@ -61,6 +61,7 @@ import {
   trackProductClick, 
   trackWhatsAppClick 
 } from '../services/analyticsService';
+import SEO from '../components/SEO';
 
 const Icons = {
   Layers,
@@ -202,8 +203,29 @@ export default function Home({ onQuote }: HomeProps) {
     : Number(currentAmps) <= 35 ? '6.0 sq mm Cu FR-LSH'
     : '10.0+ sq mm Armoured Cu';
 
+  const localBusinessSchema = {
+    "@context": "https://schema.org",
+    "@type": "ElectricalStore",
+    "name": businessInfo.fullName || "Sai Enterprises",
+    "description": businessInfo.description || "Premium electrical products supplier and authorized brand dealer serving homeowners, electricians, contractors, and businesses.",
+    "url": "https://saienterprises.in",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": businessInfo.address.line1 || "Near Bank of India, TCI Chowk",
+      "addressLocality": businessInfo.address.city || "Rourkela",
+      "addressRegion": businessInfo.address.state || "Odisha",
+      "postalCode": businessInfo.address.pincode || "769004",
+      "addressCountry": "IN"
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
+      <SEO 
+        title="Sai Enterprises | Electrical Products in Rourkela"
+        description="Sai Enterprises is an electrical products store near TCI Chowk, Rourkela, offering switches, sockets, wires, cables and electrical accessories from leading brands."
+        jsonLd={localBusinessSchema}
+      />
       {/* 1. HERO SECTION WITH INTERACTIVE ELECTRIC CANVAS */}
       <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden pt-20 pb-20">
         {/* Interactive Electrical Background Canvas */}
@@ -225,14 +247,14 @@ export default function Home({ onQuote }: HomeProps) {
           >
             
             <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.1] text-white">
-              The Modern Platform for <br/>
+              Premium Electrical Products in <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-volt via-cyan-400 to-blue-500 drop-shadow-[0_0_25px_rgba(0,229,255,0.3)]">
-                Electrical Infrastructure
+                Rourkela, Odisha
               </span>
             </h1>
             
             <p className="text-base sm:text-lg md:text-xl text-slate-300 max-w-3xl leading-relaxed font-normal">
-              Direct brand-authorized distribution platform for switches, cables, switchgear, and commercial lighting with {businessInfo.experience}+ years of enterprise reliability.
+              Sai Enterprises is your trusted local electrical partner near TCI Chowk, Rourkela (769004). We are authorized brand distributors offering genuine switches, sockets, wires, cables, and accessories.
             </p>
             
             {/* CTAs */}

@@ -14,12 +14,12 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('voltedge-theme') as Theme;
+      const saved = localStorage.getItem('saienterprises-theme') as Theme;
       if (saved && ['light', 'dark', 'system'].includes(saved)) {
         return saved;
       }
     }
-    return 'dark'; // Default to dark theme for Voltedge
+    return 'dark'; // Default to dark theme for Sai Enterprises
   });
 
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => {
@@ -76,7 +76,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('voltedge-theme', newTheme);
+      localStorage.setItem('saienterprises-theme', newTheme);
     }
   };
 

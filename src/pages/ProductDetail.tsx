@@ -6,6 +6,7 @@ import { Section, SectionHeader, ProductImage, Badge, EmptyState, useScrollRevea
 import { getProductBySlug, getPublishedProductsPaginated } from '../services/productService';
 import { trackProductView, trackProductClick, trackWhatsAppClick, trackPhoneCallClick } from '../services/analyticsService';
 import type { FirestoreProduct } from '../lib/firestore-types';
+import SEO from '../components/SEO';
 
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -89,8 +90,61 @@ export default function ProductDetail() {
     );
   }
 
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.name,
+    "description": product.description || product.shortDescription,
+    "image": product.images && product.images.length > 0 ? product.images[0] : "",
+    "brand": {
+      "@type": "Brand",
+      "name": product.brand
+    },
+    "category": product.category,
+    "sku": product.id,
+    "url": `https://saienterprises.in/products/${product.slug}`
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://saienterprises.in/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Products",
+        "item": "https://saienterprises.in/products"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": product.category,
+        "item": `https://saienterprises.in/products?category=${product.categorySlug}`
+      },
+      {
+        "@type": "ListItem",
+        "position": 4,
+        "name": product.name,
+        "item": `https://saienterprises.in/products/${product.slug}`
+      }
+    ]
+  };
+
+  const pageDescription = product.shortDescription || (product.description ? product.description.slice(0, 155) : "");
+
   return (
     <div className="pt-24 pb-0">
+      <SEO 
+        title={`${product.name} | ${product.brand} | Sai Enterprises Rourkela`}
+        description={pageDescription}
+        jsonLd={[productSchema, breadcrumbSchema]}
+      />
       {/* Breadcrumbs */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-8">
         <nav className="flex text-sm text-dark-3 items-center space-x-2">
@@ -98,7 +152,7 @@ export default function ProductDetail() {
           <ChevronRight size={16} />
           <Link to="/products" className="hover:text-volt transition-colors">Products</Link>
           <ChevronRight size={16} />
-          <Link to={`/categories/${product.categorySlug}`} className="hover:text-volt transition-colors">
+          <Link to={`/products?category=${product.categorySlug}`} className="hover:text-volt transition-colors">
             {product.category}
           </Link>
           <ChevronRight size={16} />

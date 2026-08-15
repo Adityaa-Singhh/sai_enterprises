@@ -5,6 +5,7 @@ import { getWhatsAppUrl, getPhoneUrl } from '../data';
 import { usePublicStore } from '../data/publicStore';
 import { submitEnquiry } from '../services/enquiryService';
 import { trackEnquirySubmission, trackWhatsAppClick, trackPhoneCallClick } from '../services/analyticsService';
+import SEO from '../components/SEO';
 
 interface ContactProps {
   onQuote: () => void;
@@ -76,6 +77,10 @@ export default function Contact({ onQuote }: ContactProps) {
 
   return (
     <div className="pt-24 pb-12 min-h-screen bg-dark-0 text-white">
+      <SEO 
+        title="Contact Sai Enterprises | TCI Chowk, Rourkela"
+        description="Contact Sai Enterprises near Bank of India, TCI Chowk, Rourkela for electrical products, product enquiries and store information."
+      />
       <Section id="contact-header" className="pt-12 pb-8">
         <SectionHeader 
           label="Get in Touch" 

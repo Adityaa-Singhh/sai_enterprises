@@ -3,6 +3,7 @@ import { ChevronDown, MessageCircle, Phone } from 'lucide-react';
 import { Section, SectionHeader, useScrollReveal } from '../components/ui';
 import { getWhatsAppUrl, getPhoneUrl } from '../data';
 import { usePublicStore } from '../data/publicStore';
+import SEO from '../components/SEO';
 
 const categories = ['All', 'Products', 'Brands', 'Orders', 'Store', 'Delivery', 'Warranty', 'Returns', 'Services'];
 
@@ -22,6 +23,10 @@ export default function FAQ() {
 
   return (
     <div className="pt-24 pb-12 min-h-screen bg-dark-0 text-white">
+      <SEO 
+        title="Electrical Products FAQ | Sai Enterprises Rourkela"
+        description="Find answers to common questions about electrical products, brands, availability and enquiries at Sai Enterprises."
+      />
       <Section id="faq-header" className="pt-12 pb-8">
         <SectionHeader 
           label="Help Center" 

@@ -7,6 +7,7 @@ import { usePublicStore } from '../data/publicStore';
 import { getPublishedProductsPaginated } from '../services/productService';
 import { trackSearchQuery } from '../services/analyticsService';
 import type { FirestoreProduct as Product } from '../lib/firestore-types';
+import SEO from '../components/SEO';
 
 const Products = () => {
   const { categories, brands } = usePublicStore();
@@ -124,6 +125,10 @@ const Products = () => {
 
   return (
     <div className="pt-24 pb-16 min-h-screen">
+      <SEO 
+        title="Electrical Products in Rourkela | Sai Enterprises"
+        description="Explore switches, sockets, wires, cables, electrical accessories and other products available from Sai Enterprises in Rourkela."
+      />
       {/* Header & Hero */}
       <Section className="!pt-8 !pb-4">
         <div ref={headerRef} className="text-center max-w-3xl mx-auto mb-6">

@@ -92,7 +92,7 @@ export const InteractiveCircuitShowcase: React.FC = () => {
             Test Real-Time Circuit Dynamics
           </h2>
           <p className="text-sm sm:text-base text-slate-300 max-w-2xl mt-2 font-normal leading-relaxed">
-            Interact with simulated modular switches, tune commercial LED color temperatures, and inspect live load telemetry powered by Voltedge distribution components.
+            Interact with simulated modular switches, tune commercial LED color temperatures, and inspect live load telemetry powered by Sai Enterprises distribution components.
           </p>
         </div>
 

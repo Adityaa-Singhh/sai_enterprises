@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Filter, Image as ImageIcon } from 'lucide-react';
 import { Section, SectionHeader, ProductImage, Lightbox, Badge, useScrollReveal } from '../components/ui';
 import { usePublicStore } from '../data/publicStore';
+import SEO from '../components/SEO';
 
 export default function Gallery() {
   const { gallery: galleryImages, businessInfo } = usePublicStore();
@@ -20,6 +21,10 @@ export default function Gallery() {
 
   return (
     <div className="pt-24 pb-16 min-h-screen">
+      <SEO 
+        title="Sai Enterprises Electrical Store | Rourkela"
+        description="View the Sai Enterprises store, products and electrical brand gallery in Rourkela."
+      />
       <Section id="gallery-header" className="!pt-8 !pb-12" ref={headerRef}>
         <SectionHeader 
           label="Our Gallery" 

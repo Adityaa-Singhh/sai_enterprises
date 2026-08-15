@@ -25,6 +25,7 @@ import { Link } from 'react-router-dom';
 import { Section, SectionHeader, Counter, useScrollReveal } from '../components/ui';
 import { getWhatsAppUrl, getPhoneUrl, categories } from '../data';
 import { usePublicStore } from '../data/publicStore';
+import SEO from '../components/SEO';
 
 const CAT_ICONS: Record<string, any> = {
   ToggleRight,
@@ -77,6 +78,10 @@ export default function About() {
 
   return (
     <div className="pt-24 lg:pt-32 pb-16 min-h-screen">
+      <SEO 
+        title="About Sai Enterprises | Electrical Shop in Rourkela"
+        description="Learn about Sai Enterprises, a local electrical products store serving customers in Rourkela and surrounding areas."
+      />
       {/* Hero Section */}
       <section className="relative py-20 overflow-hidden">
         <div className="absolute inset-0 bg-dark-0" />
@@ -94,7 +99,7 @@ export default function About() {
               About <span className="text-volt">{businessInfo.name}</span>
             </h1>
             <p className="text-xl text-slate-300 leading-relaxed max-w-2xl font-normal">
-              {businessInfo.tagline}
+              Your trusted local electrical retail partner near Bank of India, TCI Chowk, Rourkela.
             </p>
           </div>
         </div>
@@ -114,7 +119,7 @@ export default function About() {
             
             <div className="space-y-6 text-slate-300 text-lg leading-relaxed font-normal">
               <p>
-                {businessInfo.name} was founded with a simple belief — that every home, every project, and every electrician deserves access to genuine, high-quality electrical products at fair prices. What started as a small neighborhood electrical shop has grown into a trusted supplier serving thousands of customers across the region.
+                {businessInfo.name} was founded in Rourkela, Odisha, with a simple belief — that every home, commercial project, and local electrician deserves access to genuine, high-quality electrical products at fair prices. What started as a regional electrical shop near TCI Chowk has grown into a trusted supplier serving thousands of contractors and homeowners across the Rourkela 769004 area and surrounding districts.
               </p>
               <p>
                 With over {businessInfo.experience} years of hands-on experience in the electrical industry, our team has built {businessInfo.name} on the values of trust, quality, and personal attention. We know our customers by name, understand their requirements, and go the extra mile to ensure they get exactly what they need.

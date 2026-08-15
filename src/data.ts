@@ -487,7 +487,7 @@ export const testimonials: Testimonial[] = [
     name: 'Rajesh Kumar',
     role: 'Homeowner',
     rating: 5,
-    review: 'Excellent shop! I got all the switches and sockets for my new home from VoltEdge. The owner personally helped me choose the right products. Very genuine and fair pricing.',
+    review: 'Excellent shop! I got all the switches and sockets for my new home from Sai Enterprises. The owner personally helped me choose the right products. Very genuine and fair pricing.',
     date: '2 weeks ago',
   },
   {
@@ -495,7 +495,7 @@ export const testimonials: Testimonial[] = [
     name: 'Suresh Electricals',
     role: 'Electrician',
     rating: 5,
-    review: 'I have been buying all my electrical supplies from VoltEdge for over 3 years. They always have stock, give good rates for bulk orders, and the quality is always genuine.',
+    review: 'I have been buying all my electrical supplies from Sai Enterprises for over 3 years. They always have stock, give good rates for bulk orders, and the quality is always genuine.',
     date: '1 month ago',
   },
   {
@@ -503,7 +503,7 @@ export const testimonials: Testimonial[] = [
     name: 'Priya Sharma',
     role: 'Interior Designer',
     rating: 5,
-    review: 'As an interior designer, I need reliable suppliers who understand modular products. VoltEdge has an impressive range of switches and sockets from top brands. Highly recommended!',
+    review: 'As an interior designer, I need reliable suppliers who understand modular products. Sai Enterprises has an impressive range of switches and sockets from top brands. Highly recommended!',
     date: '3 weeks ago',
   },
   {
@@ -511,7 +511,7 @@ export const testimonials: Testimonial[] = [
     name: 'Manoj Constructions',
     role: 'Contractor',
     rating: 4,
-    review: 'We regularly source wires, cables, and MCBs from VoltEdge for our construction projects. Competitive pricing and they always deliver on time. Good business relationship.',
+    review: 'We regularly source wires, cables, and MCBs from Sai Enterprises for our construction projects. Competitive pricing and they always deliver on time. Good business relationship.',
     date: '1 month ago',
   },
   {
@@ -550,7 +550,7 @@ export const faqs: FAQ[] = [
   {
     id: 'faq-2',
     question: 'Are you an authorized dealer for these brands?',
-    answer: 'Yes, VoltEdge is an authorized dealer and distributor for PMCona and several other leading electrical brands. All products we sell are 100% genuine with manufacturer warranty.',
+    answer: 'Yes, Sai Enterprises is an authorized dealer and distributor for PMCona and several other leading electrical brands. All products we sell are 100% genuine with manufacturer warranty.',
     category: 'Brands',
   },
   {
@@ -612,7 +612,7 @@ export interface GalleryImage {
 }
 
 export const galleryImages: GalleryImage[] = [
-  { id: 'gal-1', src: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?auto=format&fit=crop&w=800&q=80', alt: 'VoltEdge Store Front', category: 'exterior' },
+  { id: 'gal-1', src: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?auto=format&fit=crop&w=800&q=80', alt: 'Sai Enterprises Store Front', category: 'exterior' },
   { id: 'gal-2', src: 'https://images.unsplash.com/photo-1513828742140-ccaa34f3ccd0?auto=format&fit=crop&w=800&q=80', alt: 'Store Interior — Wire Section', category: 'interior' },
   { id: 'gal-3', src: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=800&q=80', alt: 'Product Display Wall', category: 'products' },
   { id: 'gal-4', src: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=800&q=80', alt: 'Brand Display Area', category: 'brands' },
@@ -647,17 +647,17 @@ export const businessInfo = {
     pincode: '769004',
     full: 'Near Bank of India, TCI Chowk, Rourkela, Odisha 769004, India',
   },
-  mapUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3507.1234567890!2d77.0266!3d28.4595!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjjCsDI3JzM0LjIiTiA3N8KwMDEnMzUuNiJF!5e0!3m2!1sen!2sin!4v1234567890',
-  mapDirectionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=28.4595,77.0266',
+  mapUrl: 'https://maps.google.com/maps?q=Near%20Bank%20of%20India%2C%20TCI%20Chowk%2C%20Rourkela%2C%20Odisha%20769004%2C%20India&t=&z=15&ie=UTF8&iwloc=&output=embed',
+  mapDirectionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Near+Bank+of+India,+TCI+Chowk,+Rourkela,+Odisha+769004,+India',
   hours: {
     weekdays: '9:00 AM — 8:00 PM',
     saturday: '9:00 AM — 8:00 PM',
     sunday: 'Closed',
   },
-  experience: '15+',
+  experience: '5+',
   productsCount: '500+',
-  brandsCount: '20+',
-  customersServed: '5000+',
+  brandsCount: '5+',
+  customersServed: '1000+',
   social: {
     instagram: 'https://instagram.com/saienterprises',
     facebook: 'https://facebook.com/saienterprises',

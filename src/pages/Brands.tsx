@@ -4,6 +4,7 @@ import { ShieldCheck, ArrowRight, MessageCircle, Phone, Search, Award } from 'lu
 import { Section, Badge, useScrollReveal } from '../components/ui';
 import { getWhatsAppUrl, getPhoneUrl } from '../data';
 import { usePublicStore } from '../data/publicStore';
+import SEO from '../components/SEO';
 
 export default function Brands() {
   const { brands, categories, businessInfo } = usePublicStore();
@@ -21,6 +22,10 @@ export default function Brands() {
 
   return (
     <div className="pt-24 min-h-screen">
+      <SEO 
+        title="Electrical Brands in Rourkela | Sai Enterprises"
+        description="Explore electrical brands and products available at Sai Enterprises near TCI Chowk, Rourkela."
+      />
       {/* Hero Section */}
       <Section className="relative overflow-hidden pt-12 pb-20">
         <div className="absolute inset-0 grid-bg opacity-30"></div>
