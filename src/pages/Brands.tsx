@@ -97,7 +97,6 @@ export default function Brands() {
                     <Badge variant="green" className="shrink-0 flex items-center gap-1.5 shadow-lg ml-4">
                       <ShieldCheck className="w-4 h-4" />
                       <span className="hidden sm:inline">Authorized Dealer</span>
-                      <span className="sm:hidden">Authorized</span>
                     </Badge>
                   )}
                 </div>

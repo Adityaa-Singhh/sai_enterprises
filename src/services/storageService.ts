@@ -18,6 +18,9 @@ import {
 } from 'firebase/storage';
 import { storage } from '../lib/firebase';
 
+const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'hsmf5noc';
+const CLOUDINARY_PRESETS = ['ml_default', 'ml_default_1', 'unsigned_upload'];
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -69,6 +72,79 @@ export function validateImageFile(file: File): string | null {
  * @returns           { downloadURL, storagePath }
  */
 export function uploadFile(
+  file: File,
+  storagePath: string,
+  onProgress?: UploadProgressCallback
+): Promise<UploadResult> {
+  // Primary upload via Cloudinary with automatic preset failover
+  return new Promise((resolve, reject) => {
+    let presetIndex = 0;
+
+    const attemptUpload = () => {
+      const currentPreset = CLOUDINARY_PRESETS[presetIndex];
+      const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+      const xhr = new XMLHttpRequest();
+      const formData = new FormData();
+
+      formData.append('file', file);
+      formData.append('upload_preset', currentPreset);
+      
+      const folder = storagePath.includes('/') ? storagePath.substring(0, storagePath.lastIndexOf('/')) : '';
+      if (folder) {
+        formData.append('folder', folder);
+      }
+
+      xhr.open('POST', url, true);
+
+      if (onProgress && xhr.upload) {
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const pct = Math.round((e.loaded / e.total) * 100);
+            onProgress(pct);
+          }
+        };
+      }
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            resolve({
+              downloadURL: response.secure_url,
+              storagePath: response.public_id,
+            });
+          } catch (err) {
+            reject(new Error('Failed to parse Cloudinary response'));
+          }
+        } else {
+          presetIndex++;
+          if (presetIndex < CLOUDINARY_PRESETS.length) {
+            console.warn(`[Storage] Cloudinary preset '${currentPreset}' failed. Trying next preset...`);
+            attemptUpload();
+          } else {
+            console.warn('[Storage] All Cloudinary presets failed. Attempting Firebase fallback...');
+            uploadFirebaseFallback(file, storagePath, onProgress).then(resolve).catch(reject);
+          }
+        }
+      };
+
+      xhr.onerror = () => {
+        presetIndex++;
+        if (presetIndex < CLOUDINARY_PRESETS.length) {
+          attemptUpload();
+        } else {
+          uploadFirebaseFallback(file, storagePath, onProgress).then(resolve).catch(reject);
+        }
+      };
+
+      xhr.send(formData);
+    };
+
+    attemptUpload();
+  });
+}
+
+function uploadFirebaseFallback(
   file: File,
   storagePath: string,
   onProgress?: UploadProgressCallback

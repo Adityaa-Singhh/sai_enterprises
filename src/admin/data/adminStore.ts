@@ -202,9 +202,35 @@ export const AdminStoreProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setActivities(prev => [newAct, ...prev.slice(0, 40)]);
   };
 
+  // Helper to manage deleted item IDs in localStorage so mock fallback items are cleanly deleted
+  const getDeletedIds = (key: string): string[] => {
+    try {
+      const saved = localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const addDeletedId = (key: string, id: string) => {
+    try {
+      const deleted = getDeletedIds(key);
+      if (!deleted.includes(id)) {
+        localStorage.setItem(key, JSON.stringify([...deleted, id]));
+      }
+    } catch (e) {
+      console.warn('Failed to update deleted IDs in localStorage', e);
+    }
+  };
+
+  const KEY_DELETED_PRODS = 'saienterprises_deleted_products';
+  const KEY_DELETED_CATS = 'saienterprises_deleted_categories';
+  const KEY_DELETED_BRANDS = 'saienterprises_deleted_brands';
+
   // 1. Subscribe to Products
   useEffect(() => {
     return onSnapshot(query(collection(db, COLLECTIONS.PRODUCTS), orderBy('createdAt', 'desc')), (snapshot) => {
+      const deletedIds = getDeletedIds(KEY_DELETED_PRODS);
       const prods = snapshot.docs.map(docSnap => {
         const data = docSnap.data();
         return {
@@ -219,6 +245,7 @@ export const AdminStoreProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           shortDescription: data.shortDescription || '',
           specifications: data.specifications || [],
           images: data.images || [],
+          sectionImages: data.sectionImages || {},
           isFeatured: data.isFeatured || false,
           isNew: data.isNew || false,
           inStock: data.inStock ?? true,
@@ -226,13 +253,16 @@ export const AdminStoreProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           tags: data.tags || []
         } as Product;
       });
-      setProducts(snapshot.empty ? initialProducts : prods);
+      const activeInitial = initialProducts.filter(p => !deletedIds.includes(p.id));
+      const activeProds = prods.filter(p => !deletedIds.includes(p.id));
+      setProducts(snapshot.empty ? activeInitial : activeProds);
     });
   }, []);
 
   // 2. Subscribe to Categories
   useEffect(() => {
     return onSnapshot(query(collection(db, COLLECTIONS.CATEGORIES), orderBy('sortOrder', 'asc')), (snapshot) => {
+      const deletedIds = getDeletedIds(KEY_DELETED_CATS);
       const cats = snapshot.docs.map(docSnap => {
         const data = docSnap.data();
         return {
@@ -246,13 +276,16 @@ export const AdminStoreProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           active: data.active ?? true
         } as Category;
       });
-      setCategories(snapshot.empty ? initialCategories : cats);
+      const activeInitial = initialCategories.filter(c => !deletedIds.includes(c.id));
+      const activeCats = cats.filter(c => !deletedIds.includes(c.id));
+      setCategories(snapshot.empty ? activeInitial : activeCats);
     });
   }, []);
 
   // 3. Subscribe to Brands
   useEffect(() => {
     return onSnapshot(query(collection(db, COLLECTIONS.BRANDS), orderBy('sortOrder', 'asc')), (snapshot) => {
+      const deletedIds = getDeletedIds(KEY_DELETED_BRANDS);
       const brs = snapshot.docs.map(docSnap => {
         const data = docSnap.data();
         return {
@@ -267,7 +300,9 @@ export const AdminStoreProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           active: data.active ?? true
         } as Brand;
       });
-      setBrands(snapshot.empty ? initialBrands : brs);
+      const activeInitial = initialBrands.filter(b => !deletedIds.includes(b.id));
+      const activeBrs = brs.filter(b => !deletedIds.includes(b.id));
+      setBrands(snapshot.empty ? activeInitial : activeBrs);
     });
   }, []);
 
@@ -465,7 +500,12 @@ export const AdminStoreProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const updateProduct = async (id: string, updates: Partial<Product>) => {
     const actor = currentUser?.uid || 'unknown';
-    await updateProductService(id, updates as any, actor);
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+    try {
+      await updateProductService(id, updates as any, actor);
+    } catch (e) {
+      console.warn('Firestore product update note:', e);
+    }
     const target = products.find(p => p.id === id);
     if (target) {
       logActivity('Updated Product', target.name, 'Updated specifications or inventory');
@@ -473,7 +513,13 @@ export const AdminStoreProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const deleteProduct = async (id: string) => {
-    await deleteProductService(id);
+    addDeletedId(KEY_DELETED_PRODS, id);
+    setProducts(prev => prev.filter(p => p.id !== id));
+    try {
+      await deleteProductService(id);
+    } catch (e) {
+      console.warn('Firestore deletion note:', e);
+    }
     const target = products.find(p => p.id === id);
     if (target) {
       logActivity('Deleted Product', target.name, 'Removed from catalogue', 'WARNING');
@@ -514,8 +560,14 @@ export const AdminStoreProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const deleteCategory = async (id: string) => {
+    addDeletedId(KEY_DELETED_CATS, id);
+    setCategories(prev => prev.filter(c => c.id !== id));
     const target = categories.find(c => c.id === id);
-    await deleteCategoryService(id);
+    try {
+      await deleteCategoryService(id);
+    } catch (e) {
+      console.warn('Category deletion note:', e);
+    }
     if (target) logActivity('Deleted Category', target.name, '', 'WARNING');
   };
 
@@ -537,8 +589,14 @@ export const AdminStoreProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const deleteBrand = async (id: string) => {
+    addDeletedId(KEY_DELETED_BRANDS, id);
+    setBrands(prev => prev.filter(b => b.id !== id));
     const target = brands.find(b => b.id === id);
-    await deleteBrandService(id);
+    try {
+      await deleteBrandService(id);
+    } catch (e) {
+      console.warn('Brand deletion note:', e);
+    }
     if (target) logActivity('Deleted Brand', target.name, '', 'WARNING');
   };
 

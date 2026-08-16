@@ -8,6 +8,7 @@ import {
   getDocs,
   getDoc,
   addDoc,
+  setDoc,
   updateDoc,
   deleteDoc,
   query,
@@ -145,17 +146,20 @@ export async function createProduct(
   return ref.id;
 }
 
-/** Update an existing product */
 export async function updateProduct(
   id: string,
   data: Partial<Omit<FirestoreProduct, 'id' | 'createdAt' | 'createdBy'>>,
   actorUid: string
 ): Promise<void> {
-  await updateDoc(doc(db, COLLECTIONS.PRODUCTS, id), {
-    ...data,
-    updatedBy: actorUid,
-    updatedAt: serverTimestamp(),
-  });
+  await setDoc(
+    doc(db, COLLECTIONS.PRODUCTS, id),
+    {
+      ...data,
+      updatedBy: actorUid,
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true }
+  );
 }
 
 /** Delete a product */

@@ -94,6 +94,11 @@ export interface FirestoreProduct {
   shortDescription: string;
   specifications: ProductSpecification[];
   images: string[];       // download URLs
+  sectionImages?: {
+    hero?: string;
+    specs?: string;
+    banner?: string;
+  };
   storagePaths: string[]; // corresponding Storage paths
   isFeatured: boolean;
   isNew: boolean;

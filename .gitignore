@@ -25,4 +25,5 @@ dist-ssr
 
 # Firebase secrets
 serviceAccountKey.json
+service-account.json
 *.json.json

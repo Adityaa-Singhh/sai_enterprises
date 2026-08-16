@@ -181,6 +181,11 @@ export interface Product {
   shortDescription: string;
   specifications: { label: string; value: string }[];
   images: string[];
+  sectionImages?: {
+    hero?: string;
+    specs?: string;
+    banner?: string;
+  };
   isFeatured: boolean;
   isNew: boolean;
   inStock: boolean;

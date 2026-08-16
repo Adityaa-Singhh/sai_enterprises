@@ -258,16 +258,23 @@ export default function ProductDetail() {
                     <ShieldCheck className="text-volt" size={24} />
                     Technical Specifications
                   </h3>
-                  <div className="glass-card rounded-2xl overflow-hidden border border-white/15 shadow-xl">
-                    {product.specifications.map((spec: any, index: number) => (
-                      <div 
-                        key={index} 
-                        className={`flex flex-col sm:flex-row py-3.5 px-5 sm:px-6 border-b border-white/10 last:border-0 ${index % 2 === 0 ? 'bg-white/5' : 'bg-transparent'}`}
-                      >
-                        <span className="text-cyan-400 sm:w-1/3 font-bold mb-1 sm:mb-0 text-sm tracking-wide">{spec.label}</span>
-                        <span className="text-white sm:w-2/3 font-medium text-sm">{spec.value}</span>
+                  <div className={`grid grid-cols-1 ${product.sectionImages?.specs ? 'lg:grid-cols-2 gap-8' : ''}`}>
+                    <div className="glass-card rounded-2xl overflow-hidden border border-white/15 shadow-xl">
+                      {product.specifications.map((spec: any, index: number) => (
+                        <div 
+                          key={index} 
+                          className={`flex flex-col sm:flex-row py-3.5 px-5 sm:px-6 border-b border-white/10 last:border-0 ${index % 2 === 0 ? 'bg-white/5' : 'bg-transparent'}`}
+                        >
+                          <span className="text-cyan-400 sm:w-1/3 font-bold mb-1 sm:mb-0 text-sm tracking-wide">{spec.label}</span>
+                          <span className="text-white sm:w-2/3 font-medium text-sm">{spec.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {product.sectionImages?.specs && (
+                      <div className="rounded-2xl overflow-hidden border border-white/15 shadow-xl aspect-square sm:aspect-video lg:aspect-auto">
+                        <ProductImage src={product.sectionImages.specs} alt={`${product.name} Specifications`} className="w-full h-full object-cover" />
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               )}
@@ -292,6 +299,17 @@ export default function ProductDetail() {
           </div>
         </div>
       </Section>
+
+      {/* Promo Banner Section */}
+      {product.sectionImages?.banner && (
+        <Section className="py-0 relative overflow-hidden bg-dark-1 border-t border-dark-2">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+            <div className="rounded-3xl overflow-hidden shadow-2xl border border-white/10 relative group bg-dark-2">
+              <ProductImage src={product.sectionImages.banner} alt={`${product.name} Promo`} className="w-full h-auto min-h-[200px] max-h-[600px] object-cover" />
+            </div>
+          </div>
+        </Section>
+      )}
 
       {/* Related Products */}
       {relatedProducts.length > 0 && (

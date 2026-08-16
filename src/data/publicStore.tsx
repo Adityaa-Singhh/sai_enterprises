@@ -115,7 +115,15 @@ export function PublicStoreProvider({ children }: { children: ReactNode }) {
             active: data.active ?? true
           }));
 
-          const brs: Brand[] = brandsRes.map(data => ({
+          // Deduplicate brands by slug to prevent duplicate buttons in filters
+          const uniqueBrandsMap = new Map();
+          brandsRes.forEach(data => {
+            if (data.slug && !uniqueBrandsMap.has(data.slug)) {
+              uniqueBrandsMap.set(data.slug, data);
+            }
+          });
+
+          const brs: Brand[] = Array.from(uniqueBrandsMap.values()).map(data => ({
             id: data.id || '',
             name: data.name || '',
             slug: data.slug || '',
