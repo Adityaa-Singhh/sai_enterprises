@@ -672,9 +672,52 @@ export const AdminStoreProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Reset/Factory seeding (Admin)
   const resetToFactoryDefaults = async () => {
-    // Simple batch reset/override seeder call
+    localStorage.removeItem(KEY_DELETED_PRODS);
+    localStorage.removeItem(KEY_DELETED_CATS);
+    localStorage.removeItem(KEY_DELETED_BRANDS);
+
+    // Delete existing products from Firestore
+    try {
+      const existingProdsSnap = await getDocs(collection(db, COLLECTIONS.PRODUCTS));
+      const deleteBatch = writeBatch(db);
+      existingProdsSnap.docs.forEach((docSnap) => {
+        deleteBatch.delete(docSnap.ref);
+      });
+      await deleteBatch.commit();
+    } catch (e) {
+      console.warn('Product cleanup note:', e);
+    }
+
     const batch = writeBatch(db);
     
+    // Seed 12 Original Products
+    for (let i = 0; i < initialProducts.length; i++) {
+      const p = initialProducts[i];
+      const prodRef = doc(collection(db, COLLECTIONS.PRODUCTS));
+      batch.set(prodRef, {
+        name: p.name,
+        slug: p.slug,
+        brand: p.brand,
+        brandId: '',
+        brandSlug: p.brandSlug,
+        category: p.category,
+        categoryId: '',
+        categorySlug: p.categorySlug,
+        description: p.description,
+        shortDescription: p.shortDescription || p.description.slice(0, 100),
+        specifications: p.specifications || [],
+        images: p.images || [],
+        storagePaths: [],
+        isFeatured: p.isFeatured || false,
+        isNew: p.isNew || false,
+        inStock: p.inStock ?? true,
+        published: true,
+        tags: p.tags || [],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    }
+
     // Clear and override businessInfo
     batch.set(doc(db, COLLECTIONS.BUSINESS_INFO, 'main'), {
       ...initialBusinessInfo,

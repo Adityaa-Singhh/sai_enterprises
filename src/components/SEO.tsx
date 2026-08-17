@@ -21,7 +21,7 @@ export default function SEO({
   const { pathname } = useLocation();
 
   // Establish canonical URL logic
-  const domain = 'https://saienterprises.in';
+  const domain = 'https://saienterprises-90c6b.web.app';
   const defaultCanonical = `${domain}${pathname === '/' ? '' : pathname}`;
   const canonicalUrl = canonical || defaultCanonical;
 

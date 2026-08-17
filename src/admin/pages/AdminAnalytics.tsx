@@ -5,7 +5,8 @@ import {
   MessageSquare, 
   Download, 
   Search, 
-  MapPin
+  MapPin,
+  ExternalLink
 } from 'lucide-react';
 import { AdminBreadcrumbs, KPICard } from '../components/AdminUI';
 import { 
@@ -18,8 +19,10 @@ import {
   BrandPerformanceChart, 
   ConversionFunnelChart 
 } from '../components/AdminCharts';
+import { useAdminStore } from '../data/adminStore';
 
 export const AdminAnalytics: React.FC = () => {
+  const { products, categories, brands, enquiries } = useAdminStore();
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | '12m'>('30d');
 
   const handleExportReport = () => {
@@ -44,8 +47,8 @@ export const AdminAnalytics: React.FC = () => {
           </p>
         </div>
 
-        {/* Time Range Selector & Export */}
-        <div className="flex items-center gap-2">
+        {/* Time Range Selector & Export & GA */}
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="bg-dark-1 border border-white/10 rounded-2xl p-1 flex items-center gap-1 text-xs">
             {(['7d', '30d', '90d', '12m'] as const).map((r) => (
               <button
@@ -60,6 +63,16 @@ export const AdminAnalytics: React.FC = () => {
             ))}
           </div>
 
+          <a
+            href="https://analytics.google.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-secondary py-2 px-4 rounded-full text-xs font-bold text-white border border-volt/30 bg-volt/10 hover:bg-volt/20 flex items-center gap-1.5 shadow-lg transition-all"
+          >
+            <ExternalLink className="w-3.5 h-3.5 text-volt" />
+            <span className="hidden sm:inline">Google Analytics</span>
+          </a>
+
           <button
             onClick={handleExportReport}
             className="btn-primary py-2 px-4 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg"
@@ -73,43 +86,43 @@ export const AdminAnalytics: React.FC = () => {
       {/* 4 Analytics KPI Highlights */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <KPICard
-          title="Total Store Visitors"
-          value="14,280"
-          change="+24.2%"
+          title="Total Store Inventory"
+          value={products.length}
+          change="+8.4%"
           isPositive={true}
           icon={Users}
           accentColor="volt"
-          subtitle="482 avg daily active visitors"
+          subtitle={`${products.filter(p => p.inStock).length} in-stock live items`}
         />
 
         <KPICard
-          title="Quotation Conversion"
-          value="15.05%"
+          title="Quotation Leads"
+          value={enquiries.length}
           change="+3.8%"
           isPositive={true}
           icon={TrendingUp}
           accentColor="emerald"
-          subtitle="2,150 total WhatsApp inquiries"
+          subtitle={`${enquiries.filter(e => e.status === 'NEW').length} new unread inquiries`}
         />
 
         <KPICard
-          title="Avg Quotation Value"
-          value="₹38,400"
-          change="+12.4%"
+          title="Product Categories"
+          value={categories.length}
+          change="+1 new"
           isPositive={true}
           icon={MessageSquare}
           accentColor="amber"
-          subtitle="Driven by bulk contractor orders"
+          subtitle="Switches, Wires, DBs, Lighting"
         />
 
         <KPICard
-          title="Mobile Share"
-          value="74.2%"
+          title="Authorized Brands"
+          value={brands.length}
           change="+5.1%"
           isPositive={true}
           icon={Users}
           accentColor="blue"
-          subtitle="Optimized for touch catalog browsing"
+          subtitle="PMCona, Havells, Polycab"
         />
       </div>
 
@@ -120,14 +133,14 @@ export const AdminAnalytics: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TopProductsBarChart />
-        <CategoryPerformanceChart />
+        <TopProductsBarChart products={products} />
+        <CategoryPerformanceChart categories={categories} products={products} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <TrafficSourcesDonutChart />
+        <TrafficSourcesDonutChart enquiries={enquiries} />
         <DeviceBreakdownDonutChart />
-        <BrandPerformanceChart />
+        <BrandPerformanceChart brands={brands} products={products} />
       </div>
 
       <ConversionFunnelChart />

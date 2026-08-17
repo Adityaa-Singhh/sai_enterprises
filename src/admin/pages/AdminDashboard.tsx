@@ -10,7 +10,8 @@ import {
   Users, 
   MessageSquare, 
   ArrowRight,
-  Plus
+  Plus,
+  ExternalLink
 } from 'lucide-react';
 import { KPICard, StatusBadge } from '../components/AdminUI';
 import { 
@@ -57,6 +58,16 @@ export const AdminDashboard: React.FC = () => {
 
           {/* Quick Action Buttons */}
           <div className="flex items-center gap-3 shrink-0 flex-wrap">
+            <a
+              href="https://analytics.google.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-secondary py-3 px-5 rounded-full text-xs font-bold text-white border border-volt/30 bg-volt/10 hover:bg-volt/20 flex items-center gap-2 transition-all shadow-md"
+            >
+              <ExternalLink className="w-4 h-4 text-volt" />
+              <span>Open Google Analytics</span>
+            </a>
+
             <Link
               to="/admin/products/new"
               className="btn-primary py-3 px-5 rounded-full text-xs font-bold flex items-center gap-2 shadow-lg"
@@ -167,15 +178,15 @@ export const AdminDashboard: React.FC = () => {
 
       {/* 4. Secondary Charts Grid (Row 2: Top Products & Category Performance) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TopProductsBarChart />
-        <CategoryPerformanceChart />
+        <TopProductsBarChart products={products} />
+        <CategoryPerformanceChart categories={categories} products={products} />
       </div>
 
       {/* 5. Tertiary Charts Grid (Row 3: Sources, Devices & Brand Inquiries) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <TrafficSourcesDonutChart />
+        <TrafficSourcesDonutChart enquiries={enquiries} />
         <DeviceBreakdownDonutChart />
-        <BrandPerformanceChart />
+        <BrandPerformanceChart brands={brands} products={products} />
       </div>
 
       {/* 6. Conversion Funnel */}
