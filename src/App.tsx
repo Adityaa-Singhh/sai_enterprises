@@ -1,7 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
-import Navbar, { Footer, MobileBottomBar, WhatsAppFab } from './components/layout';
+import Navbar, { Footer, MobileBottomBar } from './components/layout';
 import { QuoteModal } from './components/ui';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -120,7 +120,6 @@ function PublicLayout() {
 
         <Footer />
         <MobileBottomBar onQuote={() => setQuoteOpen(true)} />
-        <WhatsAppFab />
 
         {quoteOpen && <QuoteModal onClose={() => setQuoteOpen(false)} />}
       </div>

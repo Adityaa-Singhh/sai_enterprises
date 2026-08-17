@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Search, X, Package, SlidersHorizontal, LayoutGrid, List, Check, MessageCircle, Eye, ShieldCheck, Loader2 } from 'lucide-react';
+import { Search, X, Package, SlidersHorizontal, LayoutGrid, List, Check, MessageCircle, ShieldCheck, Loader2 } from 'lucide-react';
 import { Section, SectionHeader, ProductImage, Badge, EmptyState, useScrollReveal } from '../components/ui';
+import { ProductGridCard, ProductListCard } from '../components/ProductCard';
 import { getProductEnquiryUrl } from '../data';
 import { usePublicStore } from '../data/publicStore';
 import { getPublishedProductsPaginated } from '../services/productService';
@@ -145,83 +146,59 @@ const Products = () => {
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-3">
           
           {/* Top Row / Search & Filter Drawer Trigger */}
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            {/* Mobile Filter Button */}
+          <div className="flex items-center gap-2.5 w-full md:w-auto">
+            {/* Mobile Filter Button (Compact Small Size) */}
             <button
               onClick={() => setIsMobileFilterOpen(true)}
-              className="btn-primary py-2.5 px-4 rounded-full text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shrink-0"
+              className="btn-primary py-2 px-3 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-md shrink-0 transition-all active:scale-95"
+              aria-label="Filter products"
             >
-              <SlidersHorizontal className="w-4 h-4" />
-              <span>Filter & Refine</span>
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>Filter</span>
               {activeFiltersCount > 0 && (
-                <span className="w-5 h-5 rounded-full bg-dark-0 text-volt text-[11px] font-extrabold flex items-center justify-center">
+                <span className="w-4 h-4 rounded-full bg-dark-0 text-volt text-[10px] font-extrabold flex items-center justify-center">
                   {activeFiltersCount}
                 </span>
               )}
             </button>
 
-            {/* Quick Search Bar */}
-            <div className="relative flex-grow md:w-72">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-volt/70" />
+            {/* Quick Search Bar (10% Larger) */}
+            <div className="relative flex-grow md:w-80">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-volt/80" />
               <input
                 type="text"
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-full pl-9 pr-8 py-2 text-xs sm:text-sm text-white placeholder-slate-400 focus:outline-none focus:border-volt/50 transition-all"
+                className="w-full bg-white/5 border border-white/10 hover:border-white/20 rounded-full pl-10 pr-9 py-2.5 text-xs sm:text-sm text-white placeholder-slate-400 focus:outline-none focus:border-volt/60 focus:bg-white/[0.08] transition-all shadow-inner"
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                <button onClick={() => setSearchQuery('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" aria-label="Clear search">
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
           </div>
 
-          {/* Quick Horizontal Scrollable Category Pills Bar (Non-blocking touch scroll) */}
-          <div className="flex items-center gap-2 overflow-x-auto snap-x no-scrollbar w-full md:w-auto py-1">
-            <button
-              onClick={() => setSelectedCategory('')}
-              className={`snap-start flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-                selectedCategory === '' 
-                  ? 'bg-volt text-dark-0 shadow-[0_0_10px_rgba(0,229,255,0.4)]' 
-                  : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10'
-              }`}
-            >
-              All Categories
-            </button>
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.slug === selectedCategory ? '' : cat.slug)}
-                className={`snap-start flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
-                  selectedCategory === cat.slug 
-                    ? 'bg-volt text-dark-0 font-bold shadow-[0_0_10px_rgba(0,229,255,0.4)]' 
-                    : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10'
-                }`}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
-
           {/* View Mode & Count */}
-          <div className="hidden lg:flex items-center gap-4 shrink-0">
+          <div className="flex items-center justify-between md:justify-end gap-3 shrink-0 w-full md:w-auto">
             <span className="text-xs text-slate-300 font-medium">
-              <strong className="text-white">{filteredProducts.length}</strong> items displayed
+              <strong className="text-white">{filteredProducts.length}</strong> items
             </span>
             <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-full p-1">
               <button 
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-full transition-colors ${viewMode === 'grid' ? 'bg-volt text-dark-0' : 'text-slate-400 hover:text-white'}`}
+                className={`p-1.5 rounded-full transition-colors ${viewMode === 'grid' ? 'bg-volt text-dark-0 font-bold' : 'text-slate-400 hover:text-white'}`}
                 title="Grid View"
+                aria-label="Grid View"
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
               <button 
                 onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded-full transition-colors ${viewMode === 'list' ? 'bg-volt text-dark-0' : 'text-slate-400 hover:text-white'}`}
+                className={`p-1.5 rounded-full transition-colors ${viewMode === 'list' ? 'bg-volt text-dark-0 font-bold' : 'text-slate-400 hover:text-white'}`}
                 title="List View"
+                aria-label="List View"
               >
                 <List className="w-4 h-4" />
               </button>
@@ -269,74 +246,27 @@ const Products = () => {
              </div>
           ) : filteredProducts.length > 0 ? (
             <>
-              <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
-                {filteredProducts.map((product) => (
-                  <div 
-                    key={product.id} 
-                    className={`glass-card rounded-3xl overflow-hidden flex flex-col group border border-white/10 hover:border-volt/40 transition-all duration-300 shadow-xl ${
-                      viewMode === 'list' ? 'sm:flex-row items-center' : ''
-                    }`}
-                  >
-                    <div className={`relative overflow-hidden bg-dark-2 shrink-0 ${viewMode === 'list' ? 'w-full sm:w-64 aspect-[4/3]' : 'aspect-[4/3]'}`}>
-                      <ProductImage 
-                        src={product.images[0]} 
-                        alt={product.name} 
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
-                      <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
-                        {product.isNew && <Badge variant="volt">NEW</Badge>}
-                        {!product.inStock && <Badge variant="amber">OUT OF STOCK</Badge>}
-                        {product.inStock && !product.isNew && <Badge variant="green">IN STOCK</Badge>}
-                      </div>
-                      <div className="absolute top-4 right-4 liquid-glass px-3 py-1 rounded-full text-xs font-extrabold text-white backdrop-blur-md border border-white/20">
-                        {product.brand}
-                      </div>
-
-                      {/* Quick View Floating Button */}
-                      <button 
-                        onClick={() => setQuickViewProduct(product)}
-                        className="absolute bottom-4 right-4 p-2.5 rounded-full bg-dark-0/80 text-volt hover:bg-volt hover:text-dark-0 transition-all duration-300 opacity-0 group-hover:opacity-100 shadow-lg border border-white/10"
-                        title="Quick Preview"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </div>
-                    
-                    <div className="p-6 flex flex-col flex-grow w-full">
-                      <p className="text-xs text-volt font-extrabold tracking-wider uppercase mb-1.5 flex items-center justify-between">
-                        <span>{product.category}</span>
-                        <span className="text-slate-400 font-normal">{product.brand}</span>
-                      </p>
-                      <Link to={`/products/${product.slug}`}>
-                        <h3 className="text-lg font-bold text-white mb-2 group-hover:text-volt transition-colors line-clamp-2">
-                          {product.name}
-                        </h3>
-                      </Link>
-                      <p className="text-slate-300 text-sm mb-6 flex-grow line-clamp-2 font-normal leading-relaxed">
-                        {product.shortDescription}
-                      </p>
-                      
-                      <div className="flex gap-2.5 mt-auto pt-2">
-                        <Link 
-                          to={`/products/${product.slug}`}
-                          className="btn-primary flex-1 py-3 rounded-full justify-center text-xs sm:text-sm font-bold shadow-lg"
-                        >
-                          View Details
-                        </Link>
-                        <a 
-                          href={getProductEnquiryUrl(product.name)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn-whatsapp flex-1 py-3 rounded-full justify-center text-xs sm:text-sm font-bold gap-1.5"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                          Enquire
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-6">
+                  {filteredProducts.map((product) => (
+                    <ProductGridCard 
+                      key={product.id} 
+                      product={product as any} 
+                      onQuickView={(p) => setQuickViewProduct(p as any)} 
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3.5 max-w-6xl w-full mx-auto">
+                  {filteredProducts.map((product) => (
+                    <ProductListCard 
+                      key={product.id} 
+                      product={product as any} 
+                      onQuickView={(p) => setQuickViewProduct(p as any)} 
+                    />
+                  ))}
+                </div>
+              )}
               
               {hasMore && (
                 <div className="mt-12 flex justify-center">
@@ -534,13 +464,20 @@ const Products = () => {
                 )}
 
                 <div className="pt-4 flex gap-3">
+                  <Link 
+                    to={`/products/${quickViewProduct.slug}`}
+                    onClick={() => setQuickViewProduct(null)}
+                    className="btn-secondary flex-1 py-3 rounded-full text-xs font-bold flex justify-center items-center gap-2 border border-white/10"
+                  >
+                    Full Details
+                  </Link>
                   <a 
                     href={getProductEnquiryUrl(quickViewProduct.name)} 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="btn-whatsapp w-full py-3 rounded-full text-xs font-bold flex justify-center items-center gap-2"
+                    className="btn-whatsapp flex-1 py-3 rounded-full text-xs font-bold flex justify-center items-center gap-2"
                   >
-                    <MessageCircle className="w-4 h-4" /> Enquire on WhatsApp
+                    <MessageCircle className="w-4 h-4" /> WhatsApp
                   </a>
                 </div>
               </div>
