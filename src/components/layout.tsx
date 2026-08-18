@@ -167,6 +167,18 @@ export default function Navbar({ onQuote }: { onQuote: () => void }) {
         {/* Mobile controls */}
         <div className="flex lg:hidden items-center gap-2">
           <ThemeToggleButton variant="circle" start="top-right" blur={true} />
+
+          {/* Small Call Button for small screen (like desktop version) */}
+          <a
+            href={getPhoneUrl()}
+            onClick={() => trackPhoneCallClick('navbar_mobile')}
+            className="liquid-glass text-white text-xs font-semibold px-3 py-2 rounded-2xl hover:bg-white/10 transition-all flex items-center gap-1.5 border border-white/10"
+            aria-label="Call Sai Enterprises"
+          >
+            <Phone size={13} className="text-volt" />
+            <span>Call</span>
+          </a>
+
           <button
             className="liquid-glass text-white p-2.5 rounded-2xl border border-white/10"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -210,37 +222,6 @@ export default function Navbar({ onQuote }: { onQuote: () => void }) {
               </Link>
             )
           )}
-
-          <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
-            <a
-              href={getPhoneUrl()}
-              onClick={() => trackPhoneCallClick('navbar_mobile')}
-              className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-white/10 text-white text-sm font-semibold border border-white/10"
-            >
-              <Phone size={16} className="text-volt" />
-              Call Us
-            </a>
-            <a
-              href={getWhatsAppUrl()}
-              onClick={() => trackWhatsAppClick('navbar_mobile')}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-[#25d366] text-white text-sm font-semibold"
-            >
-              <MessageCircle size={16} />
-              WhatsApp
-            </a>
-            <button
-              onClick={() => {
-                trackQuoteModalOpen('navbar_mobile');
-                setMenuOpen(false);
-                onQuote();
-              }}
-              className="py-3 rounded-2xl bg-gradient-to-r from-volt to-volt-dim text-dark-0 text-sm font-bold shadow-lg"
-            >
-              Get a Quote
-            </button>
-          </div>
         </div>
       )}
     </header>

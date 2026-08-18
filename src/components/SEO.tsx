@@ -41,10 +41,12 @@ export default function SEO({
       <meta name="robots" content={robots} />
 
       {/* Open Graph Tags */}
+      <meta property="og:site_name" content="Sai Enterprises" />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:url" content={canonicalUrl} />
       <meta property="og:type" content={ogType} />
+      <meta property="og:image" content="https://saienterprises-90c6b.web.app/favicon-512x512.png" />
 
       {/* Twitter Card Tags */}
       <meta name="twitter:card" content="summary_large_image" />

@@ -77,7 +77,28 @@ const Products = () => {
 
     fetchInitial();
 
-    return () => { mounted = false; };
+    // Tab wake-up & BFCache rehydration listener
+    const handleWakeup = () => {
+      if (document.visibilityState === 'visible') {
+        fetchInitial();
+      }
+    };
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        fetchInitial();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleWakeup);
+    window.addEventListener('pageshow', handlePageShow);
+    window.addEventListener('online', handleWakeup);
+
+    return () => {
+      mounted = false;
+      document.removeEventListener('visibilitychange', handleWakeup);
+      window.removeEventListener('pageshow', handlePageShow);
+      window.removeEventListener('online', handleWakeup);
+    };
   }, [selectedCategory, debouncedSearch]);
 
   const loadMore = async () => {

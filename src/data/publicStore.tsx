@@ -35,6 +35,7 @@ interface PublicStoreState {
   businessInfo: typeof initialBusinessInfo;
   loading: boolean;
   error: Error | null;
+  refreshData?: () => Promise<void>;
 }
 
 const PublicStoreContext = createContext<PublicStoreState | null>(null);
@@ -54,8 +55,12 @@ export function PublicStoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let lastFetchTime = 0;
 
-    async function fetchData() {
+    async function fetchData(showLoader: boolean = true) {
+      if (showLoader && state.loading === false) {
+        // Keep existing data visible while revalidating in background (SWR pattern)
+      }
       try {
         const [
           featuredProductsRes,
@@ -76,6 +81,8 @@ export function PublicStoreProvider({ children }: { children: ReactNode }) {
         ]);
 
         if (mounted) {
+          lastFetchTime = Date.now();
+
           // Map Firestore types to UI types exactly as adminStore.ts did
           const prods: Product[] = featuredProductsRes.map(data => ({
             id: data.id || '',
@@ -99,47 +106,39 @@ export function PublicStoreProvider({ children }: { children: ReactNode }) {
           // Deduplicate categories by slug to fix UI showing them two times
           const uniqueCatsMap = new Map();
           categoriesRes.forEach(data => {
-            if (data.slug && !uniqueCatsMap.has(data.slug)) {
-              uniqueCatsMap.set(data.slug, data);
+            const slug = data.slug || '';
+            if (slug && !uniqueCatsMap.has(slug)) {
+              uniqueCatsMap.set(slug, {
+                id: data.id || '',
+                name: data.name || '',
+                slug: slug,
+                description: data.description || '',
+                icon: data.icon || 'Zap',
+                image: data.image || '',
+                productCount: data.productCount || 0,
+                sortOrder: data.sortOrder || 0,
+                active: data.active ?? true,
+              });
             }
           });
+          const cats: Category[] = Array.from(uniqueCatsMap.values());
 
-          const cats: Category[] = Array.from(uniqueCatsMap.values()).map(data => ({
+          const brs: Brand[] = brandsRes.map(data => ({
             id: data.id || '',
             name: data.name || '',
             slug: data.slug || '',
             description: data.description || '',
-            icon: data.icon || 'ToggleRight',
-            productCount: data.productCount || 0,
-            image: data.image || '',
-            active: data.active ?? true
-          }));
-
-          // Deduplicate brands by slug to prevent duplicate buttons in filters
-          const uniqueBrandsMap = new Map();
-          brandsRes.forEach(data => {
-            if (data.slug && !uniqueBrandsMap.has(data.slug)) {
-              uniqueBrandsMap.set(data.slug, data);
-            }
-          });
-
-          const brs: Brand[] = Array.from(uniqueBrandsMap.values()).map(data => ({
-            id: data.id || '',
-            name: data.name || '',
-            slug: data.slug || '',
             logo: data.logo || '',
-            description: data.description || '',
-            isAuthorized: data.isAuthorized || false,
-            categories: data.categories || [],
-            tagline: data.tagline || '',
-            active: data.active ?? true
+            isAuthorized: data.isAuthorized ?? true,
+            categories: (data as any).categories || [],
+            tagline: (data as any).tagline || '',
           }));
 
           const gals: GalleryImage[] = galleryRes.map(data => ({
             id: data.id || '',
             src: (data as any).url || (data as any).src || '',
             alt: data.alt || '',
-            category: data.category || 'products'
+            category: (data.category as any) || 'products'
           }));
 
           const tests = testimonialsRes.map(data => ({
@@ -181,20 +180,50 @@ export function PublicStoreProvider({ children }: { children: ReactNode }) {
             businessInfo: mappedBusinessInfo,
             loading: false,
             error: null,
+            refreshData: () => fetchData(false)
           });
         }
       } catch (err: any) {
-        console.error("Public store fetch error:", err);
+        console.warn("[PublicStore] Background sync error:", err);
         if (mounted) {
           setState(prev => ({ ...prev, loading: false, error: err }));
         }
       }
     }
 
-    fetchData();
+    // 1. Initial Load
+    fetchData(true);
+
+    // 2. Mobile Tab Wake-up & BFCache Rehydration Listeners
+    const handleWakeup = () => {
+      const isVisible = document.visibilityState === 'visible';
+      const now = Date.now();
+      // If tab becomes visible and was inactive for > 45 seconds, silently refresh data in background
+      if (isVisible && (now - lastFetchTime > 45000)) {
+        fetchData(false);
+      }
+    };
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      // If restored from BFCache (back-forward mobile cache)
+      if (event.persisted) {
+        fetchData(false);
+      }
+    };
+
+    const handleOnline = () => {
+      fetchData(false);
+    };
+
+    document.addEventListener('visibilitychange', handleWakeup);
+    window.addEventListener('pageshow', handlePageShow);
+    window.addEventListener('online', handleOnline);
 
     return () => {
       mounted = false;
+      document.removeEventListener('visibilitychange', handleWakeup);
+      window.removeEventListener('pageshow', handlePageShow);
+      window.removeEventListener('online', handleOnline);
     };
   }, []);
 

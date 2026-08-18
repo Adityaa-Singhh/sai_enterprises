@@ -139,29 +139,15 @@ export default function ProductDetail() {
   const pageDescription = product.shortDescription || (product.description ? product.description.slice(0, 155) : "");
 
   return (
-    <div className="pt-24 pb-0">
+    <div className="pt-20 sm:pt-24 pb-0">
       <SEO 
         title={`${product.name} | ${product.brand} | Sai Enterprises Rourkela`}
         description={pageDescription}
         jsonLd={[productSchema, breadcrumbSchema]}
       />
-      {/* Breadcrumbs */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-        <nav className="flex text-sm text-dark-3 items-center space-x-2">
-          <Link to="/" className="hover:text-volt transition-colors">Home</Link>
-          <ChevronRight size={16} />
-          <Link to="/products" className="hover:text-volt transition-colors">Products</Link>
-          <ChevronRight size={16} />
-          <Link to={`/products?category=${product.categorySlug}`} className="hover:text-volt transition-colors">
-            {product.category}
-          </Link>
-          <ChevronRight size={16} />
-          <span className="text-white truncate">{product.name}</span>
-        </nav>
-      </div>
 
       {/* Hero Section */}
-      <Section id="product-detail" className="pt-0 pb-16">
+      <Section id="product-detail" className="pt-2 sm:pt-4 pb-16">
         <div ref={revealRef} className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
             
@@ -329,14 +315,14 @@ export default function ProductDetail() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-stagger">
-              {relatedProducts.map((p: FirestoreProduct) => (
-                <Link
+              {relatedProducts.map((p) => (
+                <Link 
                   key={p.id}
                   to={`/products/${p.slug}`}
                   onClick={() => trackProductClick({ id: p.id, name: p.name, category: p.category, brand: p.brand }, 'related_products')}
-                  className="glass-card rounded-2xl overflow-hidden group hover:border-volt/50 transition-all duration-300 flex flex-col h-full border border-dark-2"
+                  className="glass-card rounded-2xl overflow-hidden group hover:border-volt/50 transition-all duration-300 flex flex-col h-full border border-white/10 bg-dark-2/90 hover:bg-dark-2 shadow-xl"
                 >
-                  <div className="relative aspect-[4/3] bg-dark-2/30 p-6 flex items-center justify-center overflow-hidden">
+                  <div className="relative aspect-[4/3] bg-dark-2/50 p-6 flex items-center justify-center overflow-hidden">
                     <ProductImage 
                       src={p.images[0]} 
                       alt={p.name} 
@@ -347,25 +333,23 @@ export default function ProductDetail() {
                         <Badge variant="volt" className="shadow-lg">New</Badge>
                       </div>
                     )}
-                    <div className="absolute top-3 right-3">
-                      <Badge variant="volt" className="bg-dark-1/80 backdrop-blur-md shadow-lg">{p.brand}</Badge>
-                    </div>
                   </div>
                   
-                  <div className="p-5 flex flex-col flex-grow border-t border-dark-2/50">
-                    <div className="text-xs text-dark-3 font-medium uppercase tracking-wider mb-2">
-                      {p.category}
+                  <div className="p-5 flex flex-col flex-grow border-t border-white/10">
+                    <div className="text-xs font-bold text-volt uppercase tracking-wider mb-2 flex items-center justify-between">
+                      <span>{p.category}</span>
+                      <span className="text-slate-400 font-semibold">{p.brand}</span>
                     </div>
                     <h3 className="text-lg font-bold text-white mb-2 line-clamp-2 group-hover:text-volt transition-colors">
                       {p.name}
                     </h3>
-                    <p className="text-dark-4 text-sm mb-4 line-clamp-2 flex-grow">
-                      {p.shortDescription}
+                    <p className="text-slate-300 text-sm mb-4 line-clamp-2 flex-grow font-normal leading-relaxed">
+                      {p.shortDescription || p.description || ''}
                     </p>
                     
-                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-dark-2/50">
-                      <span className="text-sm font-medium text-dark-3">View Details</span>
-                      <div className="w-8 h-8 rounded-full bg-dark-2 flex items-center justify-center text-white group-hover:bg-volt group-hover:text-dark-0 transition-colors">
+                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/10">
+                      <span className="text-sm font-semibold text-slate-300 group-hover:text-volt transition-colors">View Details</span>
+                      <div className="w-8 h-8 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-volt group-hover:bg-volt group-hover:text-dark-0 transition-all">
                         <ChevronRight size={16} />
                       </div>
                     </div>
@@ -378,13 +362,13 @@ export default function ProductDetail() {
       )}
 
       {/* CTA Section */}
-      <Section id="cta" className="bg-dark-0 relative overflow-hidden border-t border-dark-1">
+      <Section id="cta" className="bg-dark-0 relative overflow-hidden border-t border-white/10">
         <div className="grid-bg opacity-30"></div>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <div className="max-w-3xl mx-auto animate-stagger">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Need this product?</h2>
-            <p className="text-dark-4 text-lg mb-10">
-              Get in touch with us for pricing, bulk orders, or technical details regarding the {product.name}.
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Need this product?</h2>
+            <p className="text-slate-300 text-base sm:text-lg mb-8 max-w-2xl mx-auto font-normal leading-relaxed">
+              Get in touch with us for instant pricing, bulk commercial supply, or technical assistance regarding <span className="text-white font-semibold">{product.name}</span>.
             </p>
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
               <a

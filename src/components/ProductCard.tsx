@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, Eye } from 'lucide-react';
+import { MessageCircle, Eye, ArrowRight } from 'lucide-react';
 import { ProductImage } from './ui';
 import { getProductEnquiryUrl } from '../data';
 
@@ -75,13 +75,6 @@ export const ProductGridCard: React.FC<GridCardProps> = ({ product, onQuickView 
           )}
         </div>
 
-        {/* Brand Chip (Top-Right) */}
-        <div className="absolute top-2 right-2 z-10">
-          <span className="bg-dark-0/80 backdrop-blur-sm text-[9px] lg:text-[10px] font-extrabold px-2 py-0.5 rounded border border-white/20 text-white uppercase tracking-wider">
-            {product.brand}
-          </span>
-        </div>
-
         {/* Quick View Button (Bottom-Right, 32px-36px circle) */}
         {onQuickView && (
           <button
@@ -122,26 +115,38 @@ export const ProductGridCard: React.FC<GridCardProps> = ({ product, onQuickView 
           {product.shortDescription || product.description || ''}
         </p>
 
-        {/* CTA Row */}
-        <div className="flex gap-[6px] lg:gap-2 items-center mt-auto min-h-[44px]">
-          <Link
-            to={`/products/${product.slug}`}
-            className="flex-1 py-2.5 lg:py-2.5 min-h-[40px] lg:min-h-[42px] rounded-2xl text-[11px] lg:text-xs font-extrabold bg-white/10 hover:bg-white/20 border border-white/10 text-white flex items-center justify-center transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-volt/50 text-center"
-            aria-label={`View details for ${product.name}`}
-          >
-            View Details
-          </Link>
-
+        {/* CTA Row - Spacious & Ergonomic (Solves mobile button congestion) */}
+        <div className="flex items-center gap-1.5 lg:gap-2 mt-auto pt-1 min-h-[42px]">
+          {/* WhatsApp Primary Enquire Button */}
           <a
             href={getProductEnquiryUrl(product.name)}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 py-2.5 lg:py-2.5 min-h-[40px] lg:min-h-[42px] rounded-2xl text-[11px] lg:text-xs font-extrabold bg-[#25d366] hover:bg-[#20bd5a] text-white flex items-center justify-center gap-1 lg:gap-1.5 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-volt/50 text-center"
+            className="flex-1 py-2.5 min-h-[40px] lg:min-h-[42px] rounded-xl text-[11px] lg:text-xs font-extrabold bg-[#25d366] hover:bg-[#20bd5a] text-white flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-[0_2px_8px_rgba(37,211,102,0.2)] hover:shadow-[0_4px_14px_rgba(37,211,102,0.35)] focus-visible:ring-2 focus-visible:ring-volt/50 text-center"
             aria-label={`Enquire about ${product.name} on WhatsApp`}
           >
             <MessageCircle className="w-3.5 h-3.5 lg:w-4 lg:h-4 shrink-0" />
             <span>Enquire</span>
           </a>
+
+          {/* On Mobile (2-col grid): Compact Arrow Details Button */}
+          <Link
+            to={`/products/${product.slug}`}
+            className="sm:hidden w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white flex items-center justify-center transition-all active:scale-95 shrink-0 focus-visible:ring-2 focus-visible:ring-volt/50"
+            aria-label={`View details for ${product.name}`}
+            title="View Details"
+          >
+            <ArrowRight className="w-4 h-4 text-volt" />
+          </Link>
+
+          {/* On Tablet & Desktop (>= sm): Full "View Details" text button */}
+          <Link
+            to={`/products/${product.slug}`}
+            className="hidden sm:flex flex-1 py-2.5 min-h-[40px] lg:min-h-[42px] rounded-xl text-[11px] lg:text-xs font-extrabold bg-white/10 hover:bg-white/20 border border-white/10 text-white items-center justify-center transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-volt/50 text-center"
+            aria-label={`View details for ${product.name}`}
+          >
+            View Details
+          </Link>
         </div>
       </div>
     </div>
@@ -186,13 +191,6 @@ export const ProductListCard: React.FC<ListCardProps> = ({ product, onQuickView 
               OUT OF STOCK
             </span>
           )}
-        </div>
-
-        {/* Brand Chip (Top-Right on Image) */}
-        <div className="absolute top-2 right-2 z-10">
-          <span className="bg-dark-0/85 backdrop-blur-md text-[9px] font-extrabold px-2 py-0.5 rounded border border-white/20 text-white uppercase tracking-wider">
-            {product.brand}
-          </span>
         </div>
 
         {/* Quick View Button (Bottom-Right on Image) */}

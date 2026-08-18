@@ -1,7 +1,7 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
-import Navbar, { Footer, MobileBottomBar } from './components/layout';
+import Navbar, { Footer } from './components/layout';
 import { QuoteModal } from './components/ui';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -13,36 +13,37 @@ import { ProtectedRoute } from './admin/components/ProtectedRoute';
 import { AdminLayout } from './admin/components/AdminLayout';
 import { ElectricCanvas } from './components/ElectricCanvas';
 import { trackPageView } from './services/analyticsService';
+import { lazyWithRetry } from './utils/lazyWithRetry';
 
-// Public Pages (Lazy Loaded)
-const HomePage = lazy(() => import('./pages/Home'));
-const ProductsPage = lazy(() => import('./pages/Products'));
-const ProductDetailPage = lazy(() => import('./pages/ProductDetail'));
-const BrandsPage = lazy(() => import('./pages/Brands'));
-const AboutPage = lazy(() => import('./pages/About'));
-const GalleryPage = lazy(() => import('./pages/Gallery'));
-const TestimonialsPage = lazy(() => import('./pages/Testimonials'));
-const FAQPage = lazy(() => import('./pages/FAQ'));
-const ContactPage = lazy(() => import('./pages/Contact'));
+// Public Pages (Lazy Loaded with Auto-Retry & Version-Mismatch Recovery)
+const HomePage = lazyWithRetry(() => import('./pages/Home'));
+const ProductsPage = lazyWithRetry(() => import('./pages/Products'));
+const ProductDetailPage = lazyWithRetry(() => import('./pages/ProductDetail'));
+const BrandsPage = lazyWithRetry(() => import('./pages/Brands'));
+const AboutPage = lazyWithRetry(() => import('./pages/About'));
+const GalleryPage = lazyWithRetry(() => import('./pages/Gallery'));
+const TestimonialsPage = lazyWithRetry(() => import('./pages/Testimonials'));
+const FAQPage = lazyWithRetry(() => import('./pages/FAQ'));
+const ContactPage = lazyWithRetry(() => import('./pages/Contact'));
 
-// Admin Pages (Lazy Loaded named exports)
-const AdminLogin = lazy(() => import('./admin/pages/AdminLogin').then(m => ({ default: m.AdminLogin })));
-const AdminDashboard = lazy(() => import('./admin/pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
-const AdminAnalytics = lazy(() => import('./admin/pages/AdminAnalytics').then(m => ({ default: m.AdminAnalytics })));
-const AdminProducts = lazy(() => import('./admin/pages/AdminProducts').then(m => ({ default: m.AdminProducts })));
-const AdminProductEdit = lazy(() => import('./admin/pages/AdminProductEdit').then(m => ({ default: m.AdminProductEdit })));
-const AdminCategories = lazy(() => import('./admin/pages/AdminCategories').then(m => ({ default: m.AdminCategories })));
-const AdminBrands = lazy(() => import('./admin/pages/AdminBrands').then(m => ({ default: m.AdminBrands })));
-const AdminGallery = lazy(() => import('./admin/pages/AdminGallery').then(m => ({ default: m.AdminGallery })));
-const AdminTestimonials = lazy(() => import('./admin/pages/AdminTestimonials').then(m => ({ default: m.AdminTestimonials })));
-const AdminFAQs = lazy(() => import('./admin/pages/AdminFAQs').then(m => ({ default: m.AdminFAQs })));
-const AdminEnquiries = lazy(() => import('./admin/pages/AdminEnquiries').then(m => ({ default: m.AdminEnquiries })));
-const AdminBusinessInfo = lazy(() => import('./admin/pages/AdminBusinessInfo').then(m => ({ default: m.AdminBusinessInfo })));
-const AdminHomepageCMS = lazy(() => import('./admin/pages/AdminHomepageCMS').then(m => ({ default: m.AdminHomepageCMS })));
-const AdminUsers = lazy(() => import('./admin/pages/AdminUsers').then(m => ({ default: m.AdminUsers })));
-const AdminActivity = lazy(() => import('./admin/pages/AdminActivity').then(m => ({ default: m.AdminActivity })));
-const AdminSettings = lazy(() => import('./admin/pages/AdminSettings').then(m => ({ default: m.AdminSettings })));
-const AdminSecurityStates = lazy(() => import('./admin/pages/AdminSecurityStates').then(m => ({ default: m.AdminSecurityStates })));
+// Admin Pages (Lazy Loaded with Auto-Retry)
+const AdminLogin = lazyWithRetry(() => import('./admin/pages/AdminLogin'), 'AdminLogin');
+const AdminDashboard = lazyWithRetry(() => import('./admin/pages/AdminDashboard'), 'AdminDashboard');
+const AdminAnalytics = lazyWithRetry(() => import('./admin/pages/AdminAnalytics'), 'AdminAnalytics');
+const AdminProducts = lazyWithRetry(() => import('./admin/pages/AdminProducts'), 'AdminProducts');
+const AdminProductEdit = lazyWithRetry(() => import('./admin/pages/AdminProductEdit'), 'AdminProductEdit');
+const AdminCategories = lazyWithRetry(() => import('./admin/pages/AdminCategories'), 'AdminCategories');
+const AdminBrands = lazyWithRetry(() => import('./admin/pages/AdminBrands'), 'AdminBrands');
+const AdminGallery = lazyWithRetry(() => import('./admin/pages/AdminGallery'), 'AdminGallery');
+const AdminTestimonials = lazyWithRetry(() => import('./admin/pages/AdminTestimonials'), 'AdminTestimonials');
+const AdminFAQs = lazyWithRetry(() => import('./admin/pages/AdminFAQs'), 'AdminFAQs');
+const AdminEnquiries = lazyWithRetry(() => import('./admin/pages/AdminEnquiries'), 'AdminEnquiries');
+const AdminBusinessInfo = lazyWithRetry(() => import('./admin/pages/AdminBusinessInfo'), 'AdminBusinessInfo');
+const AdminHomepageCMS = lazyWithRetry(() => import('./admin/pages/AdminHomepageCMS'), 'AdminHomepageCMS');
+const AdminUsers = lazyWithRetry(() => import('./admin/pages/AdminUsers'), 'AdminUsers');
+const AdminActivity = lazyWithRetry(() => import('./admin/pages/AdminActivity'), 'AdminActivity');
+const AdminSettings = lazyWithRetry(() => import('./admin/pages/AdminSettings'), 'AdminSettings');
+const AdminSecurityStates = lazyWithRetry(() => import('./admin/pages/AdminSecurityStates'), 'AdminSecurityStates');
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -119,7 +120,6 @@ function PublicLayout() {
         </main>
 
         <Footer />
-        <MobileBottomBar onQuote={() => setQuoteOpen(true)} />
 
         {quoteOpen && <QuoteModal onClose={() => setQuoteOpen(false)} />}
       </div>
